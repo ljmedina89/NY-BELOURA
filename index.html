@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>BELOURA NY • Envíos a Ecuador</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color-scheme: dark;
+    }
+    body{
+      margin:0;
+      background:#020617;
+      color:#e2e8f0;
+    }
+    .wrap{
+      max-width:1000px;
+      margin:0 auto;
+      padding:24px 16px 48px;
+    }
+    header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:12px 0 24px;
+      border-bottom:1px solid #1f2937;
+    }
+    .logo{
+      font-weight:700;
+      font-size:1.3rem;
+      letter-spacing:0.08em;
+    }
+    .badge{
+      font-size:0.75rem;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid #22c55e33;
+      color:#bbf7d0;
+    }
+    .hero{
+      padding:24px 0 16px;
+      display:grid;
+      gap:20px;
+    }
+    @media(min-width:800px){
+      .hero{grid-template-columns:3fr 2fr;align-items:center;}
+    }
+    h1{
+      margin:0 0 8px;
+      font-size:1.9rem;
+    }
+    .muted{color:#94a3b8;}
+    .pill-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+    }
+    .pill{
+      font-size:0.8rem;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid #1f2937;
+      background:#020617;
+    }
+    .card{
+      background:#020617;
+      border-radius:18px;
+      border:1px solid #1f2937;
+      padding:18px;
+    }
+    .card h2{
+      margin:0 0 10px;
+      font-size:1.1rem;
+    }
+    label{
+      display:block;
+      font-size:0.85rem;
+      margin-bottom:4px;
+    }
+    input{
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid #1f2937;
+      background:#020617;
+      color:#e2e8f0;
+      box-sizing:border-box;
+      font-size:0.9rem;
+    }
+    input:focus{
+      outline:none;
+      border-color:#22c55e;
+      box-shadow:0 0 0 1px #22c55e55;
+    }
+    button{
+      border:none;
+      border-radius:999px;
+      padding:10px 16px;
+      font-size:0.9rem;
+      cursor:pointer;
+      background:#22c55e;
+      color:#022c22;
+      font-weight:600;
+    }
+    button:disabled{
+      opacity:.6;
+      cursor:default;
+    }
+    .btn-outline{
+      background:transparent;
+      color:#e5e7eb;
+      border:1px solid #4b5563;
+    }
+    .flex{display:flex;gap:8px;align-items:center;}
+    .flex-between{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+    .mt-2{margin-top:8px;}
+    .mt-3{margin-top:12px;}
+    .mt-4{margin-top:16px;}
+    .mt-6{margin-top:24px;}
+    .small{font-size:0.8rem;}
+    .result{
+      margin-top:10px;
+      font-size:0.85rem;
+      border-radius:12px;
+      padding:10px 12px;
+      background:#020617;
+      border:1px solid #111827;
+    }
+    .tag{
+      display:inline-block;
+      font-size:0.7rem;
+      padding:2px 8px;
+      border-radius:999px;
+      background:#0f172a;
+      border:1px solid #1f2937;
+    }
+    .historial-item{
+      border-top:1px dashed #1f2937;
+      padding-top:6px;
+      margin-top:6px;
+      font-size:0.8rem;
+    }
+    footer{
+      margin-top:32px;
+      padding-top:16px;
+      border-top:1px solid #1f2937;
+      font-size:0.78rem;
+      color:#6b7280;
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    a{color:#38bdf8;text-decoration:none;}
+    a:hover{text-decoration:underline;}
+    .whatsapp-btn{
+      position:fixed;
+      right:18px;
+      bottom:18px;
+      border-radius:999px;
+      padding:10px 16px;
+      background:#22c55e;
+      color:#052e16;
+      font-size:0.85rem;
+      font-weight:600;
+      box-shadow:0 10px 30px rgba(0,0,0,.4);
+      z-index:20;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="logo">BELOURA NY</div>
+        <div class="small muted">Envíos desde Nueva York hacia Ecuador</div>
+      </div>
+      <div class="badge">NY • Ecuador</div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <h1>Envía tus compras desde Nueva York a Ecuador con seguimiento en línea.</h1>
+          <p class="muted">
+            Recibimos tus paquetes en nuestra bodega en NY y los enviamos a tu ciudad en Ecuador con
+            seguimiento por código de envío o código de cliente.
+          </p>
+          <div class="pill-row">
+            <span class="pill">4x4 sin complicaciones</span>
+            <span class="pill">Rastreo por web</span>
+            <span class="pill">Atención por WhatsApp</span>
+          </div>
+
+          <div class="mt-6 card">
+            <h2>Consulta rápida de envío</h2>
+            <p class="small muted">
+              Ingresa tu <strong>código de envío (NY0001…)</strong> o tu <strong>código de cliente (CNY0001…)</strong>.
+            </p>
+
+            <div class="mt-3">
+              <label for="codigoEnvio">Código de envío</label>
+              <input id="codigoEnvio" placeholder="Ej: NY0007" autocomplete="off" />
+            </div>
+
+            <div class="mt-2">
+              <label for="codigoCliente">o Código de cliente</label>
+              <input id="codigoCliente" placeholder="Ej: CNY0012" autocomplete="off" />
+            </div>
+
+            <div class="mt-3 flex">
+              <button id="btnBuscar">📦 Consultar envío</button>
+              <button type="button" class="btn-outline small" id="btnLimpiar">Limpiar</button>
+            </div>
+
+            <div id="resultado" class="result mt-3" style="display:none;"></div>
+          </div>
+        </div>
+
+        <aside>
+          <div class="card">
+            <h2>Cómo funciona BELOURA NY</h2>
+            <ol class="small" style="padding-left:18px;margin:8px 0;">
+              <li>Te asignamos un <strong>código de cliente (CNY…)</strong>.</li>
+              <li>Envías tus compras de Amazon, tiendas o paquetes a nuestra bodega en NY.</li>
+              <li>Registramos cada paquete con un <strong>código de envío (NY…)</strong>.</li>
+              <li>Transportamos tus paquetes a Ecuador y te avisamos en cada etapa.</li>
+            </ol>
+            <p class="small muted mt-3">
+              Escríbenos por WhatsApp para obtener tu código de cliente y la dirección exacta de bodega en Nueva York.
+            </p>
+          </div>
+
+          <div class="card mt-3">
+            <h2>Tarifas referenciales</h2>
+            <p class="small muted">Tarifas sujetas a confirmación por WhatsApp según peso, tipo de producto y ciudad destino.</p>
+            <ul class="small" style="padding-left:18px;margin:8px 0;">
+              <li>Paquetes categoría 4x4.</li>
+              <li>Ropa y zapatos por libra.</li>
+              <li>Electrónicos con condiciones especiales.</li>
+            </ul>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <footer>
+      <span>© <span id="year"></span> BELOURA NY • Envíos a Ecuador</span>
+      <span>Soporte: <a href="https://wa.me/593000000000" target="_blank">WhatsApp</a></span>
+    </footer>
+  </div>
+
+  <a class="whatsapp-btn" href="https://wa.me/593000000000" target="_blank">
+    💬 Escríbenos a BELOURA NY
+  </a>
+
+  <script>
+    const API_URL = "AQUI_TU_URL_DE_APPSSCRIPT"; // ← pega aquí la URL del Web App
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const inputEnvio = document.getElementById('codigoEnvio');
+    const inputCliente = document.getElementById('codigoCliente');
+    const btnBuscar = document.getElementById('btnBuscar');
+    const btnLimpiar = document.getElementById('btnLimpiar');
+    const resultado = document.getElementById('resultado');
+
+    btnBuscar.addEventListener('click', async () => {
+      const codigoEnvio = inputEnvio.value.trim().toUpperCase();
+      const codigoCliente = inputCliente.value.trim().toUpperCase();
+
+      if (!codigoEnvio && !codigoCliente) {
+        showResult("Por favor ingresa un código de envío o un código de cliente.", false);
+        return;
+      }
+
+      btnBuscar.disabled = true;
+      btnBuscar.textContent = "Buscando…";
+
+      try {
+        let payload;
+        if (codigoEnvio) {
+          payload = { action: "trackByCodigoEnvio", codigoEnvio };
+        } else {
+          payload = { action: "trackByCodigoCliente", codigoCliente };
+        }
+
+        const res = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify(payload),
+          headers: { "Content-Type": "application/json" }
+        });
+
+        const data = await res.json();
+        renderResponse(data, !!codigoEnvio, codigoEnvio || codigoCliente);
+      } catch (err) {
+        console.error(err);
+        showResult("Ocurrió un error al consultar. Inténtalo nuevamente.", false);
+      } finally {
+        btnBuscar.disabled = false;
+        btnBuscar.textContent = "📦 Consultar envío";
+      }
+    });
+
+    btnLimpiar.addEventListener('click', () => {
+      inputEnvio.value = "";
+      inputCliente.value = "";
+      resultado.style.display = "none";
+      resultado.innerHTML = "";
+    });
+
+    function showResult(text, ok) {
+      resultado.style.display = "block";
+      resultado.innerHTML = `<div class="small ${ok ? "" : "muted"}">${text}</div>`;
+    }
+
+    function renderResponse(data, byEnvio, code) {
+      if (!data.found) {
+        showResult(`No se encontraron resultados para el código <strong>${code}</strong>.`, false);
+        return;
+      }
+
+      if (byEnvio) {
+        const envio = data.envio || {};
+        const historial = data.historial || [];
+
+        let html = `
+          <div class="small">
+            <div class="flex-between">
+              <span><strong>Código:</strong> ${envio.CodigoEnvio || ''}</span>
+              <span class="tag">${envio.EstadoActual || 'Sin estado'}</span>
+            </div>
+            <div class="mt-2">
+              <strong>Destino:</strong> ${envio.CiudadDestino || ''}<br/>
+              <strong>Peso:</strong> ${envio.PesoLb || ''} lb<br/>
+              <strong>Última actualización:</strong> ${envio.UltimaActualizacion || ''}
+            </div>
+        `;
+
+        if (historial.length) {
+          html += `<div class="mt-3"><strong>Historial:</strong>`;
+          historial
+            .sort((a,b) => new Date(a.FechaHora) - new Date(b.FechaHora))
+            .forEach(item => {
+              html += `
+                <div class="historial-item">
+                  <div><strong>${item.FechaHora || ''}</strong></div>
+                  <div>${item.Estado || ''}</div>
+                  <div class="muted">${item.Comentario || ''}</div>
+                </div>
+              `;
+            });
+          html += `</div>`;
+        }
+
+        html += `</div>`;
+        resultado.style.display = "block";
+        resultado.innerHTML = html;
+      } else {
+        const envios = data.envios || [];
+        if (!envios.length) {
+          showResult(`No se encontraron envíos asociados al código de cliente <strong>${code}</strong>.`, false);
+          return;
+        }
+
+        let html = `
+          <div class="small">
+            <div><strong>Código cliente:</strong> ${code}</div>
+            <div class="mt-2"><strong>Envíos encontrados:</strong></div>
+        `;
+
+        envios.forEach(e => {
+          html += `
+            <div class="historial-item">
+              <div class="flex-between">
+                <span><strong>${e.CodigoEnvio || ''}</strong></span>
+                <span class="tag">${e.EstadoActual || 'Sin estado'}</span>
+              </div>
+              <div class="muted">
+                Destino: ${e.CiudadDestino || ''} • Peso: ${e.PesoLb || ''} lb<br/>
+                Última actualización: ${e.UltimaActualizacion || ''}
+              </div>
+            </div>
+          `;
+        });
+
+        html += `</div>`;
+        resultado.style.display = "block";
+        resultado.innerHTML = html;
+      }
+    }
+  </script>
+</body>
+</html>
