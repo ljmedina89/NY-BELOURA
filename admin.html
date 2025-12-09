@@ -137,7 +137,17 @@
       color:#fecaca;
     }
     .small{font-size:0.8rem;}
+    .cliente-info-box{
+      border-radius:10px;
+      border:1px dashed #334155;
+      padding:8px 10px;
+      font-size:0.78rem;
+      color:#9ca3af;
+      min-height:52px;
+    }
   </style>
+  <!-- jsPDF para generar el PDF de la guía -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -216,11 +226,22 @@
         <div class="section-title">Datos del cliente</div>
         <div class="grid grid-2">
           <div>
-            <label for="CodigoCliente">Código cliente (CNY…)</label>
-            <input id="CodigoCliente" name="CodigoCliente" required placeholder="Ej: CNY0001" />
-            <span class="small muted">Si acabas de crear el cliente, copia aquí su código.</span>
+            <label for="SelectCliente">Cliente</label>
+            <select id="SelectCliente" required>
+              <option value="">Seleccionar cliente…</option>
+            </select>
+            <span class="small muted">La lista se llena con los clientes registrados.</span>
+          </div>
+          <div>
+            <label>Información del cliente</label>
+            <div id="ClienteInfo" class="cliente-info-box">
+              Selecciona un cliente para ver sus datos (nombre, cédula, teléfono, ciudad, dirección).
+            </div>
           </div>
         </div>
+
+        <!-- input oculto para llevar el CódigoCliente al payload -->
+        <input type="hidden" id="CodigoCliente" name="CodigoCliente" />
 
         <div class="section-title">Remitente / origen</div>
         <div class="grid grid-3">
@@ -268,6 +289,16 @@
             </select>
           </div>
           <div>
+            <label for="EstadoInicial">Estado inicial</label>
+            <select id="EstadoInicial" name="EstadoInicial" required>
+              <option value="Recibido en bodega NY">Recibido en bodega NY</option>
+              <option value="Recibido en Arlington TX">Recibido en Arlington TX</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="margin-top:10px;">
+          <div>
             <label for="TrackingInterno">Tracking interno (opcional)</label>
             <input id="TrackingInterno" name="TrackingInterno" placeholder="Tracking Miami/Guayaquil, etc." />
           </div>
@@ -313,7 +344,7 @@
 
         <div class="section-title">Acciones</div>
         <div class="flex">
-          <button type="submit" class="btn-primary" id="btnGuardarEnvio">Guardar envío</button>
+          <button type="submit" class="btn-primary" id="btnGuardarEnvio">Guardar envío + PDF guía</button>
           <button type="button" class="btn-secondary" id="btnLimpiarEnvio">Limpiar</button>
         </div>
 
@@ -323,8 +354,11 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxPyn9c2sLUC7H3vAPGnkzGjbfj7B5PLVcFhGS9BUuIESdqUWuirTUSaRKlKBK6Cdcqtw/exec";           // ← misma URL que en index.html
-    const SECRET_KEY = "Beloura2025@";       // ← mismo SECRET_KEY que en Apps Script
+    const API_URL   = "https://script.google.com/macros/s/AKfycbyxyMjUyh5GQAmxEnI_jU8uHvuyv3xPxAToCAQmLtygfMHfOnY7zzqcRX03QvYPhREaZA/exec";    // ← misma URL que en index.html
+    const SECRET_KEY = "Beloura2025@";  // ← mismo SECRET_KEY que en Apps Script
+
+    // Cache de clientes para rellenar select y mostrar info
+    const clientesCache = {};
 
     // Tabs
     const tabs = document.querySelectorAll('.tab-btn');
@@ -353,6 +387,63 @@
       element.style.display = 'none';
       element.textContent = '';
     }
+
+    /*********** CARGAR CLIENTES EN SELECT ***********/
+    const selectCliente = document.getElementById('SelectCliente');
+    const hiddenCodigoCliente = document.getElementById('CodigoCliente');
+    const clienteInfoDiv = document.getElementById('ClienteInfo');
+
+    async function loadClientes() {
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'listClientes',
+            secretKey: SECRET_KEY
+          })
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          console.error('Error listClientes:', data.error);
+          return;
+        }
+        const clientes = data.clientes || [];
+        selectCliente.innerHTML = '<option value="">Seleccionar cliente…</option>';
+        clientes.forEach(c => {
+          if (!c.CodigoCliente) return;
+          clientesCache[c.CodigoCliente] = c;
+          const opt = document.createElement('option');
+          opt.value = c.CodigoCliente;
+          opt.textContent = c.CodigoCliente + ' – ' + (c.NombreCompleto || '');
+          selectCliente.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Error al cargar clientes:', err);
+      }
+    }
+
+    function renderClienteInfo(code) {
+      if (!code || !clientesCache[code]) {
+        clienteInfoDiv.textContent = 'Selecciona un cliente para ver sus datos (nombre, cédula, teléfono, ciudad, dirección).';
+        return;
+      }
+      const c = clientesCache[code];
+      clienteInfoDiv.innerHTML = `
+        <strong>${c.NombreCompleto || ''}</strong><br/>
+        Cédula: ${c.Cedula || ''}<br/>
+        Tel: ${c.Telefono || ''}<br/>
+        Ciudad: ${c.CiudadDestino || ''}<br/>
+        Dirección: ${c.Direccion || ''}
+      `;
+    }
+
+    selectCliente.addEventListener('change', () => {
+      const code = selectCliente.value;
+      hiddenCodigoCliente.value = code;
+      renderClienteInfo(code);
+    });
+
+    document.addEventListener('DOMContentLoaded', loadClientes);
 
     /*********** CLIENTE ***********/
     const formCliente = document.getElementById('formCliente');
@@ -388,9 +479,9 @@
 
       try {
         const res = await fetch(API_URL, {
-  method: 'POST',
-  body: JSON.stringify(payload)   // 👈 sin headers
-});
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
         const data = await res.json();
 
         if (!data.ok) {
@@ -399,6 +490,8 @@
           const codigo = data.codigoCliente || '';
           showAlert(alertCliente, 'Cliente creado correctamente. Código: ' + codigo, true);
           formCliente.reset();
+          // Recargar lista de clientes para que aparezca el nuevo
+          loadClientes();
         }
       } catch (err) {
         console.error(err);
@@ -416,10 +509,11 @@
     const alertEnvio = document.getElementById('alertEnvio');
 
     btnLimpiarEnvio.addEventListener('click', () => {
-      const codigoClienteVal = document.getElementById('CodigoCliente').value;
       formEnvio.reset();
+      hiddenCodigoCliente.value = '';
+      selectCliente.value = '';
+      renderClienteInfo('');
       clearAlert(alertEnvio);
-      document.getElementById('CodigoCliente').value = codigoClienteVal;
     });
 
     formEnvio.addEventListener('submit', async (e) => {
@@ -427,10 +521,17 @@
       clearAlert(alertEnvio);
 
       const formData = new FormData(formEnvio);
+      const codigoCliente = (formData.get('CodigoCliente') || '').toUpperCase().trim();
+
+      if (!codigoCliente) {
+        showAlert(alertEnvio, 'Debes seleccionar un cliente.', false);
+        return;
+      }
+
       const payload = {
         action: 'createEnvio',
         secretKey: SECRET_KEY,
-        CodigoCliente: (formData.get('CodigoCliente') || '').toUpperCase().trim(),
+        CodigoCliente: codigoCliente,
         RemitenteNombre: formData.get('RemitenteNombre') || '',
         RemitenteTelefono: formData.get('RemitenteTelefono') || '',
         TiendaOrigen: formData.get('TiendaOrigen') || '',
@@ -438,6 +539,7 @@
         PesoLb: formData.get('PesoLb') || '',
         ValorDeclarado: formData.get('ValorDeclarado') || '',
         Tipo: formData.get('Tipo') || '',
+        EstadoInicial: formData.get('EstadoInicial') || '',
         TrackingInterno: formData.get('TrackingInterno') || '',
         DestNombre: formData.get('DestNombre') || '',
         DestCedula: formData.get('DestCedula') || '',
@@ -448,11 +550,6 @@
         Observacion: formData.get('Observacion') || '',
         Usuario: 'Leonardo'
       };
-
-      if (!payload.CodigoCliente) {
-        showAlert(alertEnvio, 'El código de cliente es obligatorio.', false);
-        return;
-      }
 
       btnGuardarEnvio.disabled = true;
       btnGuardarEnvio.textContent = 'Guardando...';
@@ -469,18 +566,90 @@
         } else {
           const codigoEnvio = data.codigoEnvio || '';
           showAlert(alertEnvio, 'Envío creado correctamente. Código: ' + codigoEnvio, true);
-          const codigoClienteVal = payload.CodigoCliente;
+
+          const selectedCode = codigoCliente;
           formEnvio.reset();
-          document.getElementById('CodigoCliente').value = codigoClienteVal;
+          selectCliente.value = selectedCode;
+          hiddenCodigoCliente.value = selectedCode;
+          renderClienteInfo(selectedCode);
+
+          const cliente = clientesCache[selectedCode] || null;
+          generateGuiaPdf({
+            codigoEnvio,
+            codigoCliente: selectedCode,
+            cliente,
+            envio: payload
+          });
         }
       } catch (err) {
         console.error(err);
         showAlert(alertEnvio, 'Error de red al guardar el envío.', false);
       } finally {
         btnGuardarEnvio.disabled = false;
-        btnGuardarEnvio.textContent = 'Guardar envío';
+        btnGuardarEnvio.textContent = 'Guardar envío + PDF guía';
       }
     });
+
+    /*********** PDF DE GUÍA ***********/
+    function generateGuiaPdf({ codigoEnvio, codigoCliente, cliente, envio }) {
+      if (!window.jspdf) {
+        console.warn('jsPDF no disponible');
+        return;
+      }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(16);
+      doc.text('BELOURA COURIER', 105, 15, { align: 'center' });
+      doc.setFontSize(11);
+      doc.text('Guía de envío', 105, 22, { align: 'center' });
+
+      let y = 32;
+      doc.setFontSize(10);
+      doc.text(`Código envío: ${codigoEnvio}`, 14, y); y += 6;
+      doc.text(`Código cliente: ${codigoCliente}`, 14, y); y += 8;
+
+      if (cliente) {
+        doc.text('Cliente:', 14, y); y += 5;
+        doc.text(`${cliente.NombreCompleto || ''}`, 20, y); y += 5;
+        doc.text(`Cédula: ${cliente.Cedula || ''}`, 20, y); y += 5;
+        doc.text(`Tel: ${cliente.Telefono || ''}`, 20, y); y += 5;
+        doc.text(`Ciudad: ${cliente.CiudadDestino || ''}`, 20, y); y += 5;
+        doc.text(`Dirección: ${cliente.Direccion || ''}`, 20, y); y += 8;
+      }
+
+      doc.text('Destinatario:', 14, y); y += 5;
+      doc.text(`${envio.DestNombre}`, 20, y); y += 5;
+      doc.text(`Cédula: ${envio.DestCedula}`, 20, y); y += 5;
+      doc.text(`Tel: ${envio.DestTelefono}`, 20, y); y += 5;
+      doc.text(`Ciudad: ${envio.CiudadDestino}`, 20, y); y += 5;
+      doc.text(`Dirección: ${envio.DestDireccion}`, 20, y); y += 5;
+      if (envio.DestReferencia) {
+        doc.text(`Ref: ${envio.DestReferencia}`, 20, y); y += 8;
+      } else {
+        y += 4;
+      }
+
+      doc.text('Contenido:', 14, y); y += 5;
+      doc.text(`${envio.Descripcion}`, 20, y); y += 5;
+      doc.text(`Peso: ${envio.PesoLb} lb`, 20, y); y += 5;
+      doc.text(`Valor declarado: $${envio.ValorDeclarado}`, 20, y); y += 5;
+      doc.text(`Tipo: ${envio.Tipo}`, 20, y); y += 8;
+
+      doc.text('Escanea el código para rastrear tu envío:', 14, y); y += 5;
+
+      const qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=180x180&chl=${encodeURIComponent(codigoEnvio)}`;
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = function() {
+        doc.addImage(img, 'PNG', 140, 40, 50, 50);
+        doc.save(`Guia_${codigoEnvio}.pdf`);
+      };
+      img.onerror = function() {
+        doc.save(`Guia_${codigoEnvio}.pdf`);
+      };
+      img.src = qrUrl;
+    }
   </script>
 </body>
 </html>
