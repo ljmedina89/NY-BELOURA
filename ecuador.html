@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>BELOURA NY • Guías Ecuador</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color-scheme:dark;
+    }
+    body{
+      margin:0;
+      background:#020617;
+      color:#e5e7eb;
+    }
+    .wrap{
+      max-width:960px;
+      margin:0 auto;
+      padding:24px 16px 48px;
+    }
+    h1{
+      margin:0 0 4px;
+      font-size:1.5rem;
+    }
+    .muted{color:#9ca3af;font-size:0.85rem;}
+    .card{
+      margin-top:20px;
+      background:#020617;
+      border:1px solid #1f2937;
+      border-radius:18px;
+      padding:18px;
+    }
+    label{
+      display:block;
+      font-size:0.85rem;
+      margin-bottom:4px;
+    }
+    input{
+      width:100%;
+      box-sizing:border-box;
+      padding:9px 11px;
+      border-radius:10px;
+      border:1px solid #1f2937;
+      background:#020617;
+      color:#e5e7eb;
+      font-size:0.9rem;
+    }
+    input:focus{
+      outline:none;
+      border-color:#22c55e;
+      box-shadow:0 0 0 1px #22c55e55;
+    }
+    button{
+      border:none;
+      border-radius:999px;
+      padding:9px 16px;
+      font-size:0.9rem;
+      cursor:pointer;
+      font-weight:600;
+    }
+    .btn-primary{
+      background:#22c55e;
+      color:#052e16;
+    }
+    .btn-secondary{
+      background:transparent;
+      color:#e5e7eb;
+      border:1px solid #4b5563;
+    }
+    .flex{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .small{font-size:0.8rem;}
+    .tag{
+      display:inline-block;
+      font-size:0.75rem;
+      padding:2px 8px;
+      border-radius:999px;
+      background:#0f172a;
+      border:1px solid #1f2937;
+    }
+    .table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:0.8rem;
+      margin-top:10px;
+    }
+    .table th,.table td{
+      padding:6px 8px;
+      border-bottom:1px solid #1f2937;
+      text-align:left;
+    }
+    .table th{
+      background:#020617;
+      color:#9ca3af;
+      font-weight:600;
+    }
+    .alert{
+      margin-top:12px;
+      border-radius:12px;
+      padding:9px 11px;
+      font-size:0.8rem;
+    }
+    .alert-error{
+      background:#451a0a;
+      border:1px solid #b91c1c;
+      color:#fecaca;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>BELOURA NY • Guías para Ecuador</h1>
+      <div class="muted">
+        Uso interno del encargado en Ecuador para verificar datos de envío.<br/>
+        Escanea el QR de la guía o ingresa el código manualmente.
+      </div>
+    </header>
+
+    <section class="card">
+      <label for="codigoGuia">Código de guía (NY0007, GNY0001, etc.)</label>
+      <div class="flex" style="margin-top:4px;">
+        <input id="codigoGuia" placeholder="Ej: NY0007 o GNY0001" />
+        <button id="btnBuscar" class="btn-primary">Buscar</button>
+        <button id="btnLimpiar" type="button" class="btn-secondary">Limpiar</button>
+      </div>
+      <div id="alert" class="alert alert-error" style="display:none;"></div>
+    </section>
+
+    <section id="resultado" class="card" style="margin-top:16px;display:none;"></section>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbw7kBsxl15bey7jZxeYbydGiADccF1oXarPq2E87b-zV-p4BNMaePyE18ChajXXxRGKKw/exec"; // 👈 mismo /exec que usas en las otras páginas
+
+    const inputGuia = document.getElementById('codigoGuia');
+    const btnBuscar = document.getElementById('btnBuscar');
+    const btnLimpiar = document.getElementById('btnLimpiar');
+    const alerta = document.getElementById('alert');
+    const resultado = document.getElementById('resultado');
+
+    function showError(msg) {
+      alerta.style.display = 'block';
+      alerta.textContent = msg;
+      resultado.style.display = 'none';
+      resultado.innerHTML = '';
+    }
+    function clearError() {
+      alerta.style.display = 'none';
+      alerta.textContent = '';
+    }
+
+    btnLimpiar.addEventListener('click', () => {
+      inputGuia.value = '';
+      clearError();
+      resultado.style.display = 'none';
+      resultado.innerHTML = '';
+    });
+
+    btnBuscar.addEventListener('click', () => {
+      buscarGuia();
+    });
+
+    inputGuia.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        buscarGuia();
+      }
+    });
+
+    // Si viene ?guia= en la URL (desde el QR)
+    (function initFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const g = params.get('guia');
+      if (g) {
+        inputGuia.value = g;
+        buscarGuia();
+      }
+    })();
+
+    async function buscarGuia() {
+      clearError();
+      const codigo = inputGuia.value.trim().toUpperCase();
+      if (!codigo) {
+        showError('Ingresa un código de guía.');
+        return;
+      }
+
+      btnBuscar.disabled = true;
+      btnBuscar.textContent = 'Buscando...';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'trackByCodigoGuia',
+            codigoGuia: codigo
+          })
+        });
+
+        const data = await res.json();
+        if (!data.found) {
+          showError(data.message || 'No se encontraron datos para esa guía.');
+          return;
+        }
+
+        renderGuia(data.guia, data.envios);
+      } catch (err) {
+        console.error(err);
+        showError('Error al consultar la guía.');
+      } finally {
+        btnBuscar.disabled = false;
+        btnBuscar.textContent = 'Buscar';
+      }
+    }
+
+    function renderGuia(guia, envios) {
+      resultado.style.display = 'block';
+
+      const tipo = (guia.TipoGuia || (envios.length > 1 ? 'Consolidado' : 'Individual'));
+      const pesoTotal = guia.PesoTotalLb || envios.reduce((s, e) => s + (Number(e.PesoLb) || 0), 0);
+      const estado = guia.EstadoActual || envios[0].EstadoActual || '';
+      const origen = guia.Origen || '';
+
+      let html = `
+        <div class="small">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+            <div>
+              <div><strong>Guía:</strong> ${guia.CodigoGuia || ''}</div>
+              <div><strong>Tipo:</strong> ${tipo}</div>
+              <div><strong>Origen:</strong> ${origen}</div>
+            </div>
+            <div style="text-align:right;">
+              <div><strong>Peso total:</strong> ${pesoTotal} lb</div>
+              <div><span class="tag">${estado}</span></div>
+            </div>
+          </div>
+      `;
+
+      if (envios.length === 1) {
+        const e = envios[0];
+        html += `
+          <hr style="border:none;border-top:1px solid #1f2937;margin:10px 0;">
+          <div class="small">
+            <div><strong>Envío único (8 lb) para Servientrega</strong></div>
+            <div style="margin-top:6px;">
+              <strong>Destinatario:</strong> ${e.DestNombre || ''}<br/>
+              <strong>Cédula:</strong> ${e.DestCedula || ''}<br/>
+              <strong>Teléfono:</strong> ${e.DestTelefono || ''}<br/>
+              <strong>Ciudad:</strong> ${e.CiudadDestino || ''}<br/>
+              <strong>Dirección:</strong> ${e.DestDireccion || ''}<br/>
+              <strong>Referencia:</strong> ${e.DestReferencia || ''}<br/>
+              <strong>Código cliente:</strong> ${e.CodigoCliente || ''}<br/>
+              <strong>Código envío interno:</strong> ${e.CodigoEnvio || ''} (${e.PesoLb || ''} lb)
+            </div>
+          </div>
+        `;
+      } else {
+        html += `
+          <hr style="border:none;border-top:1px solid #1f2937;margin:10px 0;">
+          <div class="small"><strong>Paquete consolidado con ${envios.length} clientes</strong></div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Cédula</th>
+                <th>Teléfono</th>
+                <th>Ciudad / Dirección</th>
+                <th>Cód. cliente</th>
+                <th>Cód. envío</th>
+                <th>Peso (lb)</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        envios.forEach(e => {
+          html += `
+            <tr>
+              <td>${e.DestNombre || ''}</td>
+              <td>${e.DestCedula || ''}</td>
+              <td>${e.DestTelefono || ''}</td>
+              <td>${(e.CiudadDestino || '')} – ${(e.DestDireccion || '')}</td>
+              <td>${e.CodigoCliente || ''}</td>
+              <td>${e.CodigoEnvio || ''}</td>
+              <td>${e.PesoLb || ''}</td>
+            </tr>
+          `;
+        });
+        html += `
+            </tbody>
+          </table>
+          <div class="small muted" style="margin-top:6px;">
+            Usar esta tabla para generar las guías individuales en Servientrega para cada cliente.
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+      resultado.innerHTML = html;
+      clearError();
+    }
+  </script>
+</body>
+</html>
