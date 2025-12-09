@@ -148,6 +148,7 @@
   </style>
   <!-- jsPDF para generar el PDF de la guía -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -566,7 +567,8 @@
         } else {
           const codigoEnvio = data.codigoEnvio || '';
           showAlert(alertEnvio, 'Envío creado correctamente. Código: ' + codigoEnvio, true);
-
+          // 👇 Generar guía en PDF tipo etiqueta
+           await generarGuiaPDF(codigoEnvio, payload);
           const selectedCode = codigoCliente;
           formEnvio.reset();
           selectCliente.value = selectedCode;
@@ -650,6 +652,142 @@
       };
       img.src = qrUrl;
     }
+    async function generarGuiaPDF(codigoEnvio, data) {
+  try {
+    const { jsPDF } = window.jspdf;
+
+    // Formato 4x6 pulgadas (etiqueta) → 4*72 x 6*72 puntos
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: [288, 432] // ancho, alto
+    });
+
+    // Datos base
+    const pesoLb = data.PesoLb || '';
+    const destNombre = data.DestNombre || '';
+    const destCedula = data.DestCedula || '';
+    const destTelefono = data.DestTelefono || '';
+    const ciudadDestino = data.CiudadDestino || '';
+    const destDireccion = data.DestDireccion || '';
+    const tipo = data.Tipo || '';
+    const estadoInicial = data.EstadoInicial || 'Recibido en bodega NY';
+
+    // Dirección de origen según estado inicial
+    let origenLinea1 = 'BELOURA COURIER';
+    let origenLinea2 = '';
+    let origenLinea3 = '';
+
+    if (estadoInicial === 'Recibido en Arlington TX') {
+      origenLinea2 = '2504 PLAZA ST';
+      origenLinea3 = 'ARLINGTON TX 76010';
+    } else {
+      origenLinea2 = 'BODEGA NY';
+      origenLinea3 = 'NEW YORK, NY';
+    }
+
+    // Cabecera (origen + peso)
+    doc.setFont('Helvetica', 'Bold');
+    doc.setFontSize(9);
+    doc.text(origenLinea1, 18, 20);
+    doc.setFont('Helvetica', 'Normal');
+    doc.text(origenLinea2, 18, 32);
+    doc.text(origenLinea3, 18, 44);
+
+    doc.setFont('Helvetica', 'Bold');
+    doc.setFontSize(10);
+    doc.text(`${pesoLb} LBS`, 220, 20, { align: 'right' });
+    doc.setFontSize(8);
+    doc.text('1 OF 1', 220, 32, { align: 'right' });
+
+    // Línea separadora
+    doc.setLineWidth(0.8);
+    doc.line(18, 54, 270, 54);
+
+    // SHIP TO
+    doc.setFontSize(9);
+    doc.setFont('Helvetica', 'Bold');
+    doc.text('SHIP TO:', 18, 70);
+
+    doc.setFont('Helvetica', 'Bold');
+    doc.setFontSize(11);
+    doc.text(destNombre.toUpperCase(), 18, 86);
+
+    doc.setFont('Helvetica', 'Normal');
+    doc.setFontSize(9);
+    doc.text(destDireccion.toUpperCase(), 18, 100);
+    doc.text(ciudadDestino.toUpperCase(), 18, 112);
+    doc.text(`TEL: ${destTelefono}`, 18, 124);
+    doc.text(`ID: ${destCedula}`, 18, 136);
+
+    // Cuadro grande con el código de envío
+    doc.setLineWidth(1.2);
+    doc.rect(18, 150, 252, 80); // x, y, width, height
+
+    doc.setFont('Helvetica', 'Bold');
+    doc.setFontSize(26);
+    doc.text(codigoEnvio.replace('-', ' '), 144, 195, { align: 'center' });
+
+    doc.setFontSize(9);
+    doc.text(tipo.toUpperCase(), 144, 210, { align: 'center' });
+
+    // QR (en vez de código de barras 1D por ahora)
+    // URL de rastreo (ajusta si usas otra)
+    const trackingUrl = `https://ny.beloura.shop/?t=${encodeURIComponent(codigoEnvio)}`;
+
+    const qrContainer = document.getElementById('qrcode');
+    qrContainer.innerHTML = '';
+    const qr = new QRCode(qrContainer, {
+      text: trackingUrl,
+      width: 120,
+      height: 120,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+
+    // Espera un momento para que el canvas se genere
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    const canvas = qrContainer.querySelector('canvas');
+    if (canvas) {
+      const dataUrl = canvas.toDataURL('image/png');
+      // Posicionar QR debajo del cuadro del código
+      doc.addImage(dataUrl, 'PNG', 24, 242, 96, 96);
+    }
+
+    // “Código de barras” simple (texto estilizado) como placeholder
+    doc.setLineWidth(0.6);
+    const baseY = 260;
+    const barXStart = 140;
+    const barXEnd = 260;
+    for (let i = 0; i < 20; i++) {
+      const x = barXStart + i * 3;
+      const h = (i % 2 === 0) ? 70 : 55;
+      doc.line(x, baseY, x, baseY + h);
+    }
+
+    doc.setFont('Helvetica', 'Normal');
+    doc.setFontSize(8);
+    doc.text(`TRACKING: ${codigoEnvio}`, 200, 340, { align: 'center' });
+
+    // Pie con marca
+    doc.setLineWidth(0.6);
+    doc.line(18, 360, 270, 360);
+    doc.setFontSize(8);
+    doc.setFont('Helvetica', 'Bold');
+    doc.text('BELOURA COURIER', 18, 374);
+    doc.setFont('Helvetica', 'Normal');
+    doc.text('Guía interna para manejo logístico y entrega en Ecuador.', 18, 386);
+    doc.text('www.beloura.shop', 18, 398);
+
+    // Descargar
+    doc.save(`Guia_${codigoEnvio}.pdf`);
+  } catch (e) {
+    console.error('Error generando PDF:', e);
+    // No rompemos el flujo si falla el PDF, solo avisamos en consola
+  }
+}
+
   </script>
+  <div id="qrcode" style="display:none;"></div>
 </body>
 </html>
