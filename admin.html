@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>BELOURA NY • Panel interno</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:#020617;
+      color:#e5e7eb;
+    }
+    .wrap{
+      max-width:1040px;
+      margin:0 auto;
+      padding:24px 16px 48px;
+    }
+    h1{
+      margin:0 0 4px;
+      font-size:1.6rem;
+    }
+    .muted{color:#9ca3af;font-size:0.85rem;}
+    .badge{
+      display:inline-block;
+      font-size:0.75rem;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid #4b5563;
+      color:#9ca3af;
+    }
+    .tabs{
+      margin-top:20px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .tab-btn{
+      border:none;
+      border-radius:999px;
+      padding:7px 14px;
+      font-size:0.85rem;
+      cursor:pointer;
+      background:#111827;
+      color:#9ca3af;
+    }
+    .tab-btn.active{
+      background:#22c55e;
+      color:#052e16;
+      font-weight:600;
+    }
+    .card{
+      margin-top:16px;
+      background:#020617;
+      border:1px solid #1f2937;
+      border-radius:18px;
+      padding:18px;
+    }
+    .section-title{
+      font-size:0.9rem;
+      font-weight:600;
+      margin:12px 0 4px;
+      text-transform:uppercase;
+      letter-spacing:0.05em;
+      color:#9ca3af;
+    }
+    .grid{
+      display:grid;
+      gap:12px;
+    }
+    @media(min-width:800px){
+      .grid-2{grid-template-columns:1fr 1fr;}
+      .grid-3{grid-template-columns:repeat(3,1fr);}
+    }
+    label{
+      display:block;
+      font-size:0.8rem;
+      margin-bottom:4px;
+    }
+    input,select,textarea{
+      width:100%;
+      box-sizing:border-box;
+      padding:9px 11px;
+      border-radius:10px;
+      border:1px solid #1f2937;
+      background:#020617;
+      color:#e5e7eb;
+      font-size:0.88rem;
+    }
+    input:focus,select:focus,textarea:focus{
+      outline:none;
+      border-color:#22c55e;
+      box-shadow:0 0 0 1px #22c55e55;
+    }
+    textarea{min-height:60px;resize:vertical;}
+    .flex{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    button{
+      border:none;
+      border-radius:999px;
+      padding:9px 16px;
+      font-size:0.9rem;
+      cursor:pointer;
+      font-weight:600;
+    }
+    .btn-primary{
+      background:#22c55e;
+      color:#052e16;
+    }
+    .btn-secondary{
+      background:transparent;
+      color:#e5e7eb;
+      border:1px solid #4b5563;
+    }
+    .btn-primary:disabled{
+      opacity:.6;
+      cursor:default;
+    }
+    .alert{
+      margin-top:12px;
+      border-radius:12px;
+      padding:9px 11px;
+      font-size:0.82rem;
+    }
+    .alert-ok{
+      background:#022c22;
+      border:1px solid #16a34a;
+      color:#bbf7d0;
+    }
+    .alert-error{
+      background:#450a0a;
+      border:1px solid #b91c1c;
+      color:#fecaca;
+    }
+    .small{font-size:0.8rem;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>BELOURA NY • Panel interno</h1>
+      <div class="muted">
+        Gestión de clientes y envíos de bodega NY a Ecuador.<br/>
+        <span class="badge">Solo uso interno • No compartir enlace</span>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-cliente">➕ Registrar cliente</button>
+      <button class="tab-btn" data-tab="tab-envio">📦 Registrar envío</button>
+    </div>
+
+    <!-- TAB CLIENTE -->
+    <section id="tab-cliente" class="card">
+      <form id="formCliente">
+        <div class="section-title">Datos del cliente (Ecuador)</div>
+        <div class="grid grid-2">
+          <div>
+            <label for="cliNombre">Nombre completo</label>
+            <input id="cliNombre" name="NombreCompleto" required />
+          </div>
+          <div>
+            <label for="cliCedula">Cédula</label>
+            <input id="cliCedula" name="Cedula" required />
+          </div>
+        </div>
+
+        <div class="grid grid-3" style="margin-top:10px;">
+          <div>
+            <label for="cliTelefono">Teléfono</label>
+            <input id="cliTelefono" name="Telefono" required />
+          </div>
+          <div>
+            <label for="cliWhatsApp">WhatsApp (opcional)</label>
+            <input id="cliWhatsApp" name="WhatsApp" />
+          </div>
+          <div>
+            <label for="cliEmail">Email (opcional)</label>
+            <input id="cliEmail" name="Email" />
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="margin-top:10px;">
+          <div>
+            <label for="cliCiudad">Ciudad destino</label>
+            <input id="cliCiudad" name="CiudadDestino" required placeholder="Babahoyo, Guayaquil, etc." />
+          </div>
+          <div>
+            <label for="cliDireccion">Dirección</label>
+            <input id="cliDireccion" name="Direccion" required />
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label for="cliNotas">Notas (opcional)</label>
+          <textarea id="cliNotas" name="Notas" placeholder="Cliente recomendado, frecuencia, etc."></textarea>
+        </div>
+
+        <div class="section-title">Acciones</div>
+        <div class="flex">
+          <button type="submit" class="btn-primary" id="btnGuardarCliente">Guardar cliente</button>
+          <button type="button" class="btn-secondary" id="btnLimpiarCliente">Limpiar</button>
+        </div>
+
+        <div id="alertCliente" class="alert" style="display:none;"></div>
+      </form>
+    </section>
+
+    <!-- TAB ENVÍO -->
+    <section id="tab-envio" class="card" style="display:none;">
+      <form id="formEnvio">
+        <div class="section-title">Datos del cliente</div>
+        <div class="grid grid-2">
+          <div>
+            <label for="CodigoCliente">Código cliente (CNY…)</label>
+            <input id="CodigoCliente" name="CodigoCliente" required placeholder="Ej: CNY0001" />
+            <span class="small muted">Si acabas de crear el cliente, copia aquí su código.</span>
+          </div>
+        </div>
+
+        <div class="section-title">Remitente / origen</div>
+        <div class="grid grid-3">
+          <div>
+            <label for="RemitenteNombre">Nombre remitente</label>
+            <input id="RemitenteNombre" name="RemitenteNombre" required />
+          </div>
+          <div>
+            <label for="RemitenteTelefono">Teléfono remitente</label>
+            <input id="RemitenteTelefono" name="RemitenteTelefono" required />
+          </div>
+          <div>
+            <label for="TiendaOrigen">Tienda origen</label>
+            <input id="TiendaOrigen" name="TiendaOrigen" placeholder="Amazon, Shein, etc." />
+          </div>
+        </div>
+
+        <div class="section-title">Paquete</div>
+        <div class="grid grid-3">
+          <div>
+            <label for="Descripcion">Descripción</label>
+            <input id="Descripcion" name="Descripcion" required placeholder="Ropa, zapatos, perfumes..." />
+          </div>
+          <div>
+            <label for="PesoLb">Peso (lb)</label>
+            <input id="PesoLb" name="PesoLb" type="number" step="0.01" min="0" required />
+          </div>
+          <div>
+            <label for="ValorDeclarado">Valor declarado (USD)</label>
+            <input id="ValorDeclarado" name="ValorDeclarado" type="number" step="0.01" min="0" required />
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="margin-top:10px;">
+          <div>
+            <label for="Tipo">Tipo de envío</label>
+            <select id="Tipo" name="Tipo" required>
+              <option value="">Seleccionar…</option>
+              <option value="4x4">4x4</option>
+              <option value="Ropa">Ropa</option>
+              <option value="Zapatos">Zapatos</option>
+              <option value="Electronico">Electrónico</option>
+              <option value="Mixto">Mixto</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+          <div>
+            <label for="TrackingInterno">Tracking interno (opcional)</label>
+            <input id="TrackingInterno" name="TrackingInterno" placeholder="Tracking Miami/Guayaquil, etc." />
+          </div>
+        </div>
+
+        <div class="section-title">Destinatario en Ecuador</div>
+        <div class="grid grid-2">
+          <div>
+            <label for="DestNombre">Nombre completo</label>
+            <input id="DestNombre" name="DestNombre" required />
+          </div>
+          <div>
+            <label for="DestCedula">Cédula</label>
+            <input id="DestCedula" name="DestCedula" required />
+          </div>
+        </div>
+
+        <div class="grid grid-3">
+          <div>
+            <label for="DestTelefono">Teléfono</label>
+            <input id="DestTelefono" name="DestTelefono" required />
+          </div>
+          <div>
+            <label for="CiudadDestino">Ciudad destino</label>
+            <input id="CiudadDestino" name="CiudadDestino" required placeholder="Guayaquil, Babahoyo, etc." />
+          </div>
+          <div>
+            <label for="DestReferencia">Referencia (opcional)</label>
+            <input id="DestReferencia" name="DestReferencia" placeholder="Barrio, esquina, local cercano..." />
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label for="DestDireccion">Dirección completa</label>
+          <input id="DestDireccion" name="DestDireccion" required placeholder="Calle, número, intersección..." />
+        </div>
+
+        <div class="section-title">Notas internas</div>
+        <div>
+          <label for="Observacion">Observación (opcional)</label>
+          <textarea id="Observacion" name="Observacion" placeholder="Instrucciones especiales, pago pendiente, etc."></textarea>
+        </div>
+
+        <div class="section-title">Acciones</div>
+        <div class="flex">
+          <button type="submit" class="btn-primary" id="btnGuardarEnvio">Guardar envío</button>
+          <button type="button" class="btn-secondary" id="btnLimpiarEnvio">Limpiar</button>
+        </div>
+
+        <div id="alertEnvio" class="alert" style="display:none;"></div>
+      </form>
+    </section>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwPq8iCfI8dhsPo2UZ6fnW9uT-D1X3BvzhnORfD-A5Xl_R5Nm9xf2zyRE31W5W9yWrWqA/exec";           // ← misma URL que en index.html
+    const SECRET_KEY = "AQUI_TU_SECRET_KEY_DEL_API";       // ← mismo SECRET_KEY que en Apps Script
+
+    // Tabs
+    const tabs = document.querySelectorAll('.tab-btn');
+    const tabSections = {
+      'tab-cliente': document.getElementById('tab-cliente'),
+      'tab-envio': document.getElementById('tab-envio')
+    };
+
+    tabs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabs.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        Object.keys(tabSections).forEach(id => {
+          tabSections[id].style.display = (id === btn.dataset.tab) ? 'block' : 'none';
+        });
+      });
+    });
+
+    // Helpers alertas
+    function showAlert(element, message, ok) {
+      element.style.display = 'block';
+      element.textContent = message;
+      element.className = 'alert ' + (ok ? 'alert-ok' : 'alert-error');
+    }
+    function clearAlert(element) {
+      element.style.display = 'none';
+      element.textContent = '';
+    }
+
+    /*********** CLIENTE ***********/
+    const formCliente = document.getElementById('formCliente');
+    const btnGuardarCliente = document.getElementById('btnGuardarCliente');
+    const btnLimpiarCliente = document.getElementById('btnLimpiarCliente');
+    const alertCliente = document.getElementById('alertCliente');
+
+    btnLimpiarCliente.addEventListener('click', () => {
+      formCliente.reset();
+      clearAlert(alertCliente);
+    });
+
+    formCliente.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearAlert(alertCliente);
+
+      const formData = new FormData(formCliente);
+      const payload = {
+        action: 'createCliente',
+        secretKey: SECRET_KEY,
+        NombreCompleto: formData.get('NombreCompleto') || '',
+        Cedula: formData.get('Cedula') || '',
+        Telefono: formData.get('Telefono') || '',
+        WhatsApp: formData.get('WhatsApp') || '',
+        Email: formData.get('Email') || '',
+        CiudadDestino: formData.get('CiudadDestino') || '',
+        Direccion: formData.get('Direccion') || '',
+        Notas: formData.get('Notas') || ''
+      };
+
+      btnGuardarCliente.disabled = true;
+      btnGuardarCliente.textContent = 'Guardando...';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+          showAlert(alertCliente, 'Error al guardar cliente: ' + (data.error || 'desconocido'), false);
+        } else {
+          const codigo = data.codigoCliente || '';
+          showAlert(alertCliente, 'Cliente creado correctamente. Código: ' + codigo, true);
+          formCliente.reset();
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert(alertCliente, 'Error de red al guardar cliente.', false);
+      } finally {
+        btnGuardarCliente.disabled = false;
+        btnGuardarCliente.textContent = 'Guardar cliente';
+      }
+    });
+
+    /*********** ENVÍO ***********/
+    const formEnvio = document.getElementById('formEnvio');
+    const btnGuardarEnvio = document.getElementById('btnGuardarEnvio');
+    const btnLimpiarEnvio = document.getElementById('btnLimpiarEnvio');
+    const alertEnvio = document.getElementById('alertEnvio');
+
+    btnLimpiarEnvio.addEventListener('click', () => {
+      const codigoClienteVal = document.getElementById('CodigoCliente').value;
+      formEnvio.reset();
+      clearAlert(alertEnvio);
+      document.getElementById('CodigoCliente').value = codigoClienteVal;
+    });
+
+    formEnvio.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearAlert(alertEnvio);
+
+      const formData = new FormData(formEnvio);
+      const payload = {
+        action: 'createEnvio',
+        secretKey: SECRET_KEY,
+        CodigoCliente: (formData.get('CodigoCliente') || '').toUpperCase().trim(),
+        RemitenteNombre: formData.get('RemitenteNombre') || '',
+        RemitenteTelefono: formData.get('RemitenteTelefono') || '',
+        TiendaOrigen: formData.get('TiendaOrigen') || '',
+        Descripcion: formData.get('Descripcion') || '',
+        PesoLb: formData.get('PesoLb') || '',
+        ValorDeclarado: formData.get('ValorDeclarado') || '',
+        Tipo: formData.get('Tipo') || '',
+        TrackingInterno: formData.get('TrackingInterno') || '',
+        DestNombre: formData.get('DestNombre') || '',
+        DestCedula: formData.get('DestCedula') || '',
+        DestTelefono: formData.get('DestTelefono') || '',
+        CiudadDestino: formData.get('CiudadDestino') || '',
+        DestDireccion: formData.get('DestDireccion') || '',
+        DestReferencia: formData.get('DestReferencia') || '',
+        Observacion: formData.get('Observacion') || '',
+        Usuario: 'Leonardo'
+      };
+
+      if (!payload.CodigoCliente) {
+        showAlert(alertEnvio, 'El código de cliente es obligatorio.', false);
+        return;
+      }
+
+      btnGuardarEnvio.disabled = true;
+      btnGuardarEnvio.textContent = 'Guardando...';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+          showAlert(alertEnvio, 'Error al guardar envío: ' + (data.error || 'desconocido'), false);
+        } else {
+          const codigoEnvio = data.codigoEnvio || '';
+          showAlert(alertEnvio, 'Envío creado correctamente. Código: ' + codigoEnvio, true);
+          const codigoClienteVal = payload.CodigoCliente;
+          formEnvio.reset();
+          document.getElementById('CodigoCliente').value = codigoClienteVal;
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert(alertEnvio, 'Error de red al guardar el envío.', false);
+      } finally {
+        btnGuardarEnvio.disabled = false;
+        btnGuardarEnvio.textContent = 'Guardar envío';
+      }
+    });
+  </script>
+</body>
+</html>
