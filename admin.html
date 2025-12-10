@@ -276,34 +276,43 @@
           </div>
         </div>
 
-        <div class="grid grid-2" style="margin-top:10px;">
-          <div>
-            <label for="Tipo">Tipo de envío</label>
-            <select id="Tipo" name="Tipo" required>
-              <option value="">Seleccionar…</option>
-              <option value="4x4">4x4</option>
-              <option value="Ropa">Ropa</option>
-              <option value="Zapatos">Zapatos</option>
-              <option value="Electronico">Electrónico</option>
-              <option value="Mixto">Mixto</option>
-              <option value="Otro">Otro</option>
-            </select>
-          </div>
-          <div>
-            <label for="EstadoInicial">Estado inicial</label>
-            <select id="EstadoInicial" name="EstadoInicial" required>
-              <option value="Recibido en bodega NY">Recibido en bodega NY</option>
-              <option value="Recibido en Arlington TX">Recibido en Arlington TX</option>
-            </select>
-          </div>
-        </div>
+       <div class="grid grid-2" style="margin-top:10px;">
+  <div>
+    <label for="Tipo">Tipo de envío</label>
+    <select id="Tipo" name="Tipo" required>
+      <option value="">Seleccionar…</option>
+      <option value="4x4">4x4</option>
+      <option value="Ropa">Ropa</option>
+      <option value="Zapatos">Zapatos</option>
+      <option value="Electronico">Electrónico</option>
+      <option value="Mixto">Mixto</option>
+      <option value="Otro">Otro</option>
+    </select>
+  </div>
+  <div>
+    <label for="EstadoInicial">Estado inicial</label>
+    <select id="EstadoInicial" name="EstadoInicial" required>
+      <option value="Recibido en bodega NY">Recibido en bodega NY</option>
+      <option value="Recibido en Arlington TX">Recibido en Arlington TX</option>
+    </select>
+  </div>
+</div>
 
-        <div class="grid grid-2" style="margin-top:10px;">
-          <div>
-            <label for="TrackingInterno">Tracking interno (opcional)</label>
-            <input id="TrackingInterno" name="TrackingInterno" placeholder="Tracking Miami/Guayaquil, etc." />
-          </div>
-        </div>
+<div class="grid grid-2" style="margin-top:10px;">
+  <div>
+    <label for="TrackingInterno">Tracking interno (opcional)</label>
+    <input id="TrackingInterno" name="TrackingInterno" placeholder="Tracking Miami/Guayaquil, etc." />
+  </div>
+  <div>
+    <label for="CodigoGuiaSelect">Consolidar en guía (opcional)</label>
+    <select id="CodigoGuiaSelect" name="CodigoGuiaSelect">
+      <option value="">Sin consolidar (guía individual)</option>
+    </select>
+    <span class="small muted">
+      Si este envío forma parte de un paquete consolidado, selecciona aquí el código de guía existente.
+    </span>
+  </div>
+</div>
 
         <div class="section-title">Destinatario en Ecuador</div>
         <div class="grid grid-2">
@@ -393,7 +402,41 @@
     const selectCliente = document.getElementById('SelectCliente');
     const hiddenCodigoCliente = document.getElementById('CodigoCliente');
     const clienteInfoDiv = document.getElementById('ClienteInfo');
+async function loadGuias() {
+  const selectGuia = document.getElementById('CodigoGuiaSelect');
+  if (!selectGuia) return;
 
+  // deja solo la opción por defecto
+  selectGuia.innerHTML = '<option value="">Sin consolidar (guía individual)</option>';
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'listGuias',
+        secretKey: SECRET_KEY
+      })
+    });
+
+    const data = await res.json();
+    if (!data.ok) {
+      console.warn('No se pudieron cargar guías:', data.error);
+      return;
+    }
+
+    const guias = data.guias || [];
+    guias.forEach(cg => {
+      const opt = document.createElement('option');
+      opt.value = cg;
+      opt.textContent = cg;
+      selectGuia.appendChild(opt);
+    });
+  } catch (e) {
+    console.error('Error cargando guías:', e);
+  }
+}
+
+    
     async function loadClientes() {
       try {
         const res = await fetch(API_URL, {
@@ -549,7 +592,8 @@
         DestDireccion: formData.get('DestDireccion') || '',
         DestReferencia: formData.get('DestReferencia') || '',
         Observacion: formData.get('Observacion') || '',
-        Usuario: 'Leonardo'
+        Usuario: 'Leonardo',
+        CodigoGuia: formData.get('CodigoGuiaSelect') || ''   // 👈 NUEVO
       };
 
       btnGuardarEnvio.disabled = true;
@@ -656,7 +700,20 @@
   try {
     const { jsPDF } = window.jspdf;
 
-    // Formato 4x6 pulgadas (etiqueta) → 4*72 x 6*72 puntos
+    // Determinar si el envío va consolidado o es individual
+    // Se prioriza data.CodigoGuia, luego data.CodigoGuiaSelect, y si nada, se usa el propio CodigoEnvio
+    const codigoGuia = (
+      (data.CodigoGuia && data.CodigoGuia.trim()) ||
+      (data.CodigoGuiaSelect && data.CodigoGuiaSelect.trim()) ||
+      ''
+    ).toUpperCase() || codigoEnvio;
+
+    const esConsolidado = !!(
+      (data.CodigoGuia && data.CodigoGuia.trim()) ||
+      (data.CodigoGuiaSelect && data.CodigoGuiaSelect.trim())
+    );
+
+    // Formato 4x6 pulgadas (etiqueta)
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'pt',
@@ -664,16 +721,16 @@
     });
 
     // Datos base
-    const pesoLb = data.PesoLb || '';
-    const destNombre = data.DestNombre || '';
-    const destCedula = data.DestCedula || '';
-    const destTelefono = data.DestTelefono || '';
+    const pesoLb        = data.PesoLb || '';
+    const destNombre    = data.DestNombre || '';
+    const destCedula    = data.DestCedula || '';
+    const destTelefono  = data.DestTelefono || '';
     const ciudadDestino = data.CiudadDestino || '';
     const destDireccion = data.DestDireccion || '';
-    const tipo = data.Tipo || '';
+    const tipo          = data.Tipo || '';
     const estadoInicial = data.EstadoInicial || 'Recibido en bodega NY';
 
-    // Dirección de origen según estado inicial
+    // Origen según estado inicial
     let origenLinea1 = 'BELOURA COURIER';
     let origenLinea2 = '';
     let origenLinea3 = '';
@@ -720,20 +777,31 @@
     doc.text(`TEL: ${destTelefono}`, 18, 124);
     doc.text(`ID: ${destCedula}`, 18, 136);
 
-    // Cuadro grande con el código de envío
+    // Cuadro grande con el código de guía (o de envío si es individual)
     doc.setLineWidth(1.2);
     doc.rect(18, 150, 252, 80); // x, y, width, height
 
     doc.setFont('Helvetica', 'Bold');
-    doc.setFontSize(26);
-    doc.text(codigoEnvio.replace('-', ' '), 144, 195, { align: 'center' });
+    doc.setFontSize(24);
+    doc.text(codigoGuia.replace('-', ' '), 144, 188, { align: 'center' });
 
     doc.setFontSize(9);
-    doc.text(tipo.toUpperCase(), 144, 210, { align: 'center' });
+    let etiquetaTipo = tipo.toUpperCase();
+    if (esConsolidado) {
+      etiquetaTipo += (etiquetaTipo ? ' • ' : '') + 'CONSOLIDADO';
+    } else {
+      etiquetaTipo += (etiquetaTipo ? ' • ' : '') + 'INDIVIDUAL';
+    }
+    doc.text(etiquetaTipo, 144, 204, { align: 'center' });
 
-    // QR (en vez de código de barras 1D por ahora)
-    // URL de rastreo (ajusta si usas otra)
-    const trackingUrl = `https://ny.beloura.shop/?t=${encodeURIComponent(codigoEnvio)}`;
+    // Mostrar código interno de envío pequeño debajo
+    doc.setFontSize(8);
+    doc.setFont('Helvetica', 'Normal');
+    doc.text(`ENVÍO INTERNO: ${codigoEnvio}`, 144, 216, { align: 'center' });
+
+    // QR apuntando a la página de Ecuador para esta guía
+    const guiaParam = codigoGuia;
+    const trackingUrl = `https://ny.beloura.shop/ecuador.html?guia=${encodeURIComponent(guiaParam)}`;
 
     const qrContainer = document.getElementById('qrcode');
     qrContainer.innerHTML = '';
@@ -744,7 +812,7 @@
       correctLevel: QRCode.CorrectLevel.M
     });
 
-    // Espera un momento para que el canvas se genere
+    // Esperar un momento para que el canvas se genere
     await new Promise(resolve => setTimeout(resolve, 300));
 
     const canvas = qrContainer.querySelector('canvas');
@@ -754,7 +822,7 @@
       doc.addImage(dataUrl, 'PNG', 24, 242, 96, 96);
     }
 
-    // “Código de barras” simple (texto estilizado) como placeholder
+    // “Código de barras” simple (placeholder visual)
     doc.setLineWidth(0.6);
     const baseY = 260;
     const barXStart = 140;
@@ -767,7 +835,7 @@
 
     doc.setFont('Helvetica', 'Normal');
     doc.setFontSize(8);
-    doc.text(`TRACKING: ${codigoEnvio}`, 200, 340, { align: 'center' });
+    doc.text(`TRACKING: ${codigoGuia}`, 200, 340, { align: 'center' });
 
     // Pie con marca
     doc.setLineWidth(0.6);
@@ -777,15 +845,18 @@
     doc.text('BELOURA COURIER', 18, 374);
     doc.setFont('Helvetica', 'Normal');
     doc.text('Guía interna para manejo logístico y entrega en Ecuador.', 18, 386);
-    doc.text('https://ny.beloura.shop', 18, 398);
+    doc.text('www.beloura.shop', 18, 398);
 
     // Descargar
-    doc.save(`Guia_${codigoEnvio}.pdf`);
+    doc.save(`Guia_${codigoGuia}.pdf`);
   } catch (e) {
     console.error('Error generando PDF:', e);
-    // No rompemos el flujo si falla el PDF, solo avisamos en consola
+    // No romper flujo si falla el PDF
   }
 }
+
+// Cargar guías disponibles al abrir el panel
+loadGuias();
 
   </script>
   <div id="qrcode" style="display:none;"></div>
