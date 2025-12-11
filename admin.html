@@ -418,15 +418,18 @@
         }
         const clientes = data.clientes || [];
         selectCliente.innerHTML = '<option value="">Seleccionar cliente…</option>';
-        clientesCache = {};
-        clientes.forEach(c => {
-          if (!c.CodigoCliente) return;
-          clientesCache[c.CodigoCliente] = c;
-          const opt = document.createElement('option');
-          opt.value = c.CodigoCliente;
-          opt.textContent = c.CodigoCliente + ' – ' + (c.NombreCompleto || '');
-          selectCliente.appendChild(opt);
-        });
+
+// limpiar el cache sin reasignar la constante
+Object.keys(clientesCache).forEach(k => delete clientesCache[k]);
+
+clientes.forEach(c => {
+  if (!c.CodigoCliente) return;
+  clientesCache[c.CodigoCliente] = c;
+  const opt = document.createElement('option');
+  opt.value = c.CodigoCliente;
+  opt.textContent = c.CodigoCliente + ' – ' + (c.NombreCompleto || '');
+  selectCliente.appendChild(opt);
+});
       } catch (err) {
         console.error('Error al cargar clientes:', err);
       }
