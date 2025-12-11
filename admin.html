@@ -529,22 +529,27 @@ async function loadGuias() {
         const data = await res.json();
 
         if (!data.ok) {
-          showAlert(alertCliente, 'Error al guardar cliente: ' + (data.error || 'desconocido'), false);
-        } else {
-          const codigo = data.codigoCliente || '';
-          showAlert(alertCliente, 'Cliente creado correctamente. Código: ' + codigo, true);
-          formCliente.reset();
-          // Recargar lista de clientes para que aparezca el nuevo
-          loadClientes();
-        }
-      } catch (err) {
-        console.error(err);
-        showAlert(alertCliente, 'Error de red al guardar cliente.', false);
-      } finally {
-        btnGuardarCliente.disabled = false;
-        btnGuardarCliente.textContent = 'Guardar cliente';
-      }
-    });
+  showAlert(alertEnvio, 'Error al guardar envío: ' + (data.error || 'desconocido'), false);
+} else {
+  const codigoEnvio = data.codigoEnvio || '';
+  showAlert(alertEnvio, 'Envío creado correctamente. Código: ' + codigoEnvio, true);
+
+  // 👇 NUEVO: aprovechamos el codigoGuia que vino del servidor
+  const codigoGuia = data.codigoGuia || codigoEnvio;
+
+  // Llamamos al generador de PDF con el CodigoGuia correcto
+  await generarGuiaPDF(codigoEnvio, {
+    ...payload,
+    CodigoGuia: codigoGuia
+  });
+
+  // Opcional: recargamos el listado de guías para que aparezca la nueva GNY...
+  loadGuias();
+
+  const codigoClienteVal = payload.CodigoCliente;
+  formEnvio.reset();
+  document.getElementById('CodigoCliente').value = codigoClienteVal;
+}
 
     /*********** ENVÍO ***********/
     const formEnvio = document.getElementById('formEnvio');
@@ -572,29 +577,30 @@ async function loadGuias() {
         return;
       }
 
-      const payload = {
-        action: 'createEnvio',
-        secretKey: SECRET_KEY,
-        CodigoCliente: codigoCliente,
-        RemitenteNombre: formData.get('RemitenteNombre') || '',
-        RemitenteTelefono: formData.get('RemitenteTelefono') || '',
-        TiendaOrigen: formData.get('TiendaOrigen') || '',
-        Descripcion: formData.get('Descripcion') || '',
-        PesoLb: formData.get('PesoLb') || '',
-        ValorDeclarado: formData.get('ValorDeclarado') || '',
-        Tipo: formData.get('Tipo') || '',
-        EstadoInicial: formData.get('EstadoInicial') || '',
-        TrackingInterno: formData.get('TrackingInterno') || '',
-        DestNombre: formData.get('DestNombre') || '',
-        DestCedula: formData.get('DestCedula') || '',
-        DestTelefono: formData.get('DestTelefono') || '',
-        CiudadDestino: formData.get('CiudadDestino') || '',
-        DestDireccion: formData.get('DestDireccion') || '',
-        DestReferencia: formData.get('DestReferencia') || '',
-        Observacion: formData.get('Observacion') || '',
-        Usuario: 'Leonardo',
-        CodigoGuia: formData.get('CodigoGuiaSelect') || ''   // 👈 NUEVO
-      };
+    
+const payload = {
+  action: 'createEnvio',
+  secretKey: SECRET_KEY,
+  CodigoCliente: (formData.get('CodigoCliente') || '').toUpperCase().trim(),
+  RemitenteNombre: formData.get('RemitenteNombre') || '',
+  RemitenteTelefono: formData.get('RemitenteTelefono') || '',
+  TiendaOrigen: formData.get('TiendaOrigen') || '',
+  Descripcion: formData.get('Descripcion') || '',
+  PesoLb: formData.get('PesoLb') || '',
+  ValorDeclarado: formData.get('ValorDeclarado') || '',
+  Tipo: formData.get('Tipo') || '',
+  EstadoInicial: formData.get('EstadoInicial') || '',
+  TrackingInterno: formData.get('TrackingInterno') || '',
+  DestNombre: formData.get('DestNombre') || '',
+  DestCedula: formData.get('DestCedula') || '',
+  DestTelefono: formData.get('DestTelefono') || '',
+  CiudadDestino: formData.get('CiudadDestino') || '',
+  DestDireccion: formData.get('DestDireccion') || '',
+  DestReferencia: formData.get('DestReferencia') || '',
+  Observacion: formData.get('Observacion') || '',
+  Usuario: 'Leonardo',
+  CodigoGuia: formData.get('CodigoGuiaSelect') || ''   // 👈 aquí
+};
 
       btnGuardarEnvio.disabled = true;
       btnGuardarEnvio.textContent = 'Guardando...';
