@@ -363,11 +363,10 @@
     </section>
   </div>
 
-  <script>
-    const API_URL   = "https://script.google.com/macros/s/AKfycbx9EFPsr3nJoYPLJpBUbZtRWJVrh3L9OI5YL7bug8CE8qybcbYxg4AHwAxE3SJBtHN7cw/exec";    // ← misma URL que en index.html
-    const SECRET_KEY = "Beloura2025@";  // ← mismo SECRET_KEY que en Apps Script
+    <script>
+    const API_URL   = "https://script.google.com/macros/s/AKfycbx9EFPsr3nJoYPLJpBUbZtRWJVrh3L9OI5YL7bug8CE8qybcbYxg4AHwAxE3SJBtHN7cw/exec";
+    const SECRET_KEY = "Beloura2025@";
 
-    // Cache de clientes para rellenar select y mostrar info
     const clientesCache = {};
 
     // Tabs
@@ -398,45 +397,11 @@
       element.textContent = '';
     }
 
-    /*********** CARGAR CLIENTES EN SELECT ***********/
+    /*********** SELECT CLIENTES ***********/
     const selectCliente = document.getElementById('SelectCliente');
     const hiddenCodigoCliente = document.getElementById('CodigoCliente');
     const clienteInfoDiv = document.getElementById('ClienteInfo');
-async function loadGuias() {
-  const selectGuia = document.getElementById('CodigoGuiaSelect');
-  if (!selectGuia) return;
 
-  // deja solo la opción por defecto
-  selectGuia.innerHTML = '<option value="">Sin consolidar (guía individual)</option>';
-
-  try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'listGuias',
-        secretKey: SECRET_KEY
-      })
-    });
-
-    const data = await res.json();
-    if (!data.ok) {
-      console.warn('No se pudieron cargar guías:', data.error);
-      return;
-    }
-
-    const guias = data.guias || [];
-    guias.forEach(cg => {
-      const opt = document.createElement('option');
-      opt.value = cg;
-      opt.textContent = cg;
-      selectGuia.appendChild(opt);
-    });
-  } catch (e) {
-    console.error('Error cargando guías:', e);
-  }
-}
-
-    
     async function loadClientes() {
       try {
         const res = await fetch(API_URL, {
@@ -453,6 +418,7 @@ async function loadGuias() {
         }
         const clientes = data.clientes || [];
         selectCliente.innerHTML = '<option value="">Seleccionar cliente…</option>';
+        clientesCache = {};
         clientes.forEach(c => {
           if (!c.CodigoCliente) return;
           clientesCache[c.CodigoCliente] = c;
@@ -487,7 +453,39 @@ async function loadGuias() {
       renderClienteInfo(code);
     });
 
-    document.addEventListener('DOMContentLoaded', loadClientes);
+    /*********** SELECT GUIAS ***********/
+    async function loadGuias() {
+      const selectGuia = document.getElementById('CodigoGuiaSelect');
+      if (!selectGuia) return;
+
+      selectGuia.innerHTML = '<option value="">Sin consolidar (guía individual)</option>';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'listGuias',
+            secretKey: SECRET_KEY
+          })
+        });
+
+        const data = await res.json();
+        if (!data.ok) {
+          console.warn('No se pudieron cargar guías:', data.error);
+          return;
+        }
+
+        const guias = data.guias || [];
+        guias.forEach(cg => {
+          const opt = document.createElement('option');
+          opt.value = cg;
+          opt.textContent = cg;
+          selectGuia.appendChild(opt);
+        });
+      } catch (e) {
+        console.error('Error cargando guías:', e);
+      }
+    }
 
     /*********** CLIENTE ***********/
     const formCliente = document.getElementById('formCliente');
@@ -529,27 +527,26 @@ async function loadGuias() {
         const data = await res.json();
 
         if (!data.ok) {
-  showAlert(alertEnvio, 'Error al guardar envío: ' + (data.error || 'desconocido'), false);
-} else {
-  const codigoEnvio = data.codigoEnvio || '';
-  showAlert(alertEnvio, 'Envío creado correctamente. Código: ' + codigoEnvio, true);
-
-  // 👇 NUEVO: aprovechamos el codigoGuia que vino del servidor
-  const codigoGuia = data.codigoGuia || codigoEnvio;
-
-  // Llamamos al generador de PDF con el CodigoGuia correcto
-  await generarGuiaPDF(codigoEnvio, {
-    ...payload,
-    CodigoGuia: codigoGuia
-  });
-
-  // Opcional: recargamos el listado de guías para que aparezca la nueva GNY...
-  loadGuias();
-
-  const codigoClienteVal = payload.CodigoCliente;
-  formEnvio.reset();
-  document.getElementById('CodigoCliente').value = codigoClienteVal;
-}
+          showAlert(alertCliente, 'Error al guardar cliente: ' + (data.error || 'desconocido'), false);
+        } else {
+          const codigo = data.codigoCliente || '';
+          showAlert(
+            alertCliente,
+            codigo ? 'Cliente creado correctamente. Código: ' + codigo : 'Cliente creado correctamente.',
+            true
+          );
+          formCliente.reset();
+          // recargar lista de clientes en el select de envíos
+          loadClientes();
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert(alertCliente, 'Error de red al guardar cliente.', false);
+      } finally {
+        btnGuardarCliente.disabled = false;
+        btnGuardarCliente.textContent = 'Guardar cliente';
+      }
+    });
 
     /*********** ENVÍO ***********/
     const formEnvio = document.getElementById('formEnvio');
@@ -577,30 +574,29 @@ async function loadGuias() {
         return;
       }
 
-    
-const payload = {
-  action: 'createEnvio',
-  secretKey: SECRET_KEY,
-  CodigoCliente: (formData.get('CodigoCliente') || '').toUpperCase().trim(),
-  RemitenteNombre: formData.get('RemitenteNombre') || '',
-  RemitenteTelefono: formData.get('RemitenteTelefono') || '',
-  TiendaOrigen: formData.get('TiendaOrigen') || '',
-  Descripcion: formData.get('Descripcion') || '',
-  PesoLb: formData.get('PesoLb') || '',
-  ValorDeclarado: formData.get('ValorDeclarado') || '',
-  Tipo: formData.get('Tipo') || '',
-  EstadoInicial: formData.get('EstadoInicial') || '',
-  TrackingInterno: formData.get('TrackingInterno') || '',
-  DestNombre: formData.get('DestNombre') || '',
-  DestCedula: formData.get('DestCedula') || '',
-  DestTelefono: formData.get('DestTelefono') || '',
-  CiudadDestino: formData.get('CiudadDestino') || '',
-  DestDireccion: formData.get('DestDireccion') || '',
-  DestReferencia: formData.get('DestReferencia') || '',
-  Observacion: formData.get('Observacion') || '',
-  Usuario: 'Leonardo',
-  CodigoGuia: formData.get('CodigoGuiaSelect') || ''   // 👈 aquí
-};
+      const payload = {
+        action: 'createEnvio',
+        secretKey: SECRET_KEY,
+        CodigoCliente: codigoCliente,
+        RemitenteNombre: formData.get('RemitenteNombre') || '',
+        RemitenteTelefono: formData.get('RemitenteTelefono') || '',
+        TiendaOrigen: formData.get('TiendaOrigen') || '',
+        Descripcion: formData.get('Descripcion') || '',
+        PesoLb: formData.get('PesoLb') || '',
+        ValorDeclarado: formData.get('ValorDeclarado') || '',
+        Tipo: formData.get('Tipo') || '',
+        EstadoInicial: formData.get('EstadoInicial') || '',
+        TrackingInterno: formData.get('TrackingInterno') || '',
+        DestNombre: formData.get('DestNombre') || '',
+        DestCedula: formData.get('DestCedula') || '',
+        DestTelefono: formData.get('DestTelefono') || '',
+        CiudadDestino: formData.get('CiudadDestino') || '',
+        DestDireccion: formData.get('DestDireccion') || '',
+        DestReferencia: formData.get('DestReferencia') || '',
+        Observacion: formData.get('Observacion') || '',
+        Usuario: 'Leonardo',
+        CodigoGuia: formData.get('CodigoGuiaSelect') || ''
+      };
 
       btnGuardarEnvio.disabled = true;
       btnGuardarEnvio.textContent = 'Guardando...';
@@ -616,22 +612,29 @@ const payload = {
           showAlert(alertEnvio, 'Error al guardar envío: ' + (data.error || 'desconocido'), false);
         } else {
           const codigoEnvio = data.codigoEnvio || '';
-          showAlert(alertEnvio, 'Envío creado correctamente. Código: ' + codigoEnvio, true);
-          // 👇 Generar guía en PDF tipo etiqueta
-           await generarGuiaPDF(codigoEnvio, payload);
+          const codigoGuia = (data.codigoGuia || '').toString().trim().toUpperCase() || ('G' + codigoEnvio);
+
+          showAlert(
+            alertEnvio,
+            `Envío creado correctamente. Código: ${codigoEnvio} • Guía: ${codigoGuia}`,
+            true
+          );
+
+          // Generar PDF etiqueta
+          await generarGuiaPDF(codigoEnvio, {
+            ...payload,
+            CodigoGuia: codigoGuia
+          });
+
+          // recargar guías en el select de consolidado
+          loadGuias();
+
+          // mantener cliente seleccionado
           const selectedCode = codigoCliente;
           formEnvio.reset();
           selectCliente.value = selectedCode;
           hiddenCodigoCliente.value = selectedCode;
           renderClienteInfo(selectedCode);
-
-          const cliente = clientesCache[selectedCode] || null;
-          generateGuiaPdf({
-            codigoEnvio,
-            codigoCliente: selectedCode,
-            cliente,
-            envio: payload
-          });
         }
       } catch (err) {
         console.error(err);
@@ -642,229 +645,149 @@ const payload = {
       }
     });
 
-    /*********** PDF DE GUÍA ***********/
-    function generateGuiaPdf({ codigoEnvio, codigoCliente, cliente, envio }) {
-      if (!window.jspdf) {
-        console.warn('jsPDF no disponible');
-        return;
-      }
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      doc.setFontSize(16);
-      doc.text('BELOURA COURIER', 105, 15, { align: 'center' });
-      doc.setFontSize(11);
-      doc.text('Guía de envío', 105, 22, { align: 'center' });
-
-      let y = 32;
-      doc.setFontSize(10);
-      doc.text(`Código envío: ${codigoEnvio}`, 14, y); y += 6;
-      doc.text(`Código cliente: ${codigoCliente}`, 14, y); y += 8;
-
-      if (cliente) {
-        doc.text('Cliente:', 14, y); y += 5;
-        doc.text(`${cliente.NombreCompleto || ''}`, 20, y); y += 5;
-        doc.text(`Cédula: ${cliente.Cedula || ''}`, 20, y); y += 5;
-        doc.text(`Tel: ${cliente.Telefono || ''}`, 20, y); y += 5;
-        doc.text(`Ciudad: ${cliente.CiudadDestino || ''}`, 20, y); y += 5;
-        doc.text(`Dirección: ${cliente.Direccion || ''}`, 20, y); y += 8;
-      }
-
-      doc.text('Destinatario:', 14, y); y += 5;
-      doc.text(`${envio.DestNombre}`, 20, y); y += 5;
-      doc.text(`Cédula: ${envio.DestCedula}`, 20, y); y += 5;
-      doc.text(`Tel: ${envio.DestTelefono}`, 20, y); y += 5;
-      doc.text(`Ciudad: ${envio.CiudadDestino}`, 20, y); y += 5;
-      doc.text(`Dirección: ${envio.DestDireccion}`, 20, y); y += 5;
-      if (envio.DestReferencia) {
-        doc.text(`Ref: ${envio.DestReferencia}`, 20, y); y += 8;
-      } else {
-        y += 4;
-      }
-
-      doc.text('Contenido:', 14, y); y += 5;
-      doc.text(`${envio.Descripcion}`, 20, y); y += 5;
-      doc.text(`Peso: ${envio.PesoLb} lb`, 20, y); y += 5;
-      doc.text(`Valor declarado: $${envio.ValorDeclarado}`, 20, y); y += 5;
-      doc.text(`Tipo: ${envio.Tipo}`, 20, y); y += 8;
-
-      doc.text('Escanea el código para rastrear tu envío:', 14, y); y += 5;
-
-      const qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=180x180&chl=${encodeURIComponent(codigoEnvio)}`;
-      const img = new Image();
-      img.crossOrigin = 'Anonymous';
-      img.onload = function() {
-        doc.addImage(img, 'PNG', 140, 40, 50, 50);
-        doc.save(`Guia_${codigoEnvio}.pdf`);
-      };
-      img.onerror = function() {
-        doc.save(`Guia_${codigoEnvio}.pdf`);
-      };
-      img.src = qrUrl;
-    }
+    /*********** PDF DE GUÍA (ETIQUETA) ***********/
     async function generarGuiaPDF(codigoEnvio, data) {
-  try {
-    const { jsPDF } = window.jspdf;
+      try {
+        const { jsPDF } = window.jspdf;
 
-    // Determinar si el envío va consolidado o es individual
-    // Se prioriza data.CodigoGuia, luego data.CodigoGuiaSelect, y si nada, se usa el propio CodigoEnvio
-    const codigoGuia = (
-      (data.CodigoGuia && data.CodigoGuia.trim()) ||
-      (data.CodigoGuiaSelect && data.CodigoGuiaSelect.trim()) ||
-      ''
-    ).toUpperCase() || codigoEnvio;
+        const codigoGuia = (data.CodigoGuia || '').toString().trim().toUpperCase() || codigoEnvio;
+        const esConsolidado =
+          data.CodigoGuia &&
+          data.CodigoGuia.trim().toUpperCase() !== ('G' + codigoEnvio.toUpperCase());
 
-    const esConsolidado = !!(
-      (data.CodigoGuia && data.CodigoGuia.trim()) ||
-      (data.CodigoGuiaSelect && data.CodigoGuiaSelect.trim())
-    );
+        const doc = new jsPDF({
+          orientation: 'portrait',
+          unit: 'pt',
+          format: [288, 432]
+        });
 
-    // Formato 4x6 pulgadas (etiqueta)
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'pt',
-      format: [288, 432] // ancho, alto
+        const pesoLb        = data.PesoLb || '';
+        const destNombre    = data.DestNombre || '';
+        const destCedula    = data.DestCedula || '';
+        const destTelefono  = data.DestTelefono || '';
+        const ciudadDestino = data.CiudadDestino || '';
+        const destDireccion = data.DestDireccion || '';
+        const tipo          = data.Tipo || '';
+        const estadoInicial = data.EstadoInicial || 'Recibido en bodega NY';
+
+        let origenLinea1 = 'BELOURA COURIER';
+        let origenLinea2 = '';
+        let origenLinea3 = '';
+
+        if (estadoInicial === 'Recibido en Arlington TX') {
+          origenLinea2 = '2504 PLAZA ST';
+          origenLinea3 = 'ARLINGTON TX 76010';
+        } else {
+          origenLinea2 = 'BODEGA NY';
+          origenLinea3 = 'NEW YORK, NY';
+        }
+
+        doc.setFont('Helvetica', 'Bold');
+        doc.setFontSize(9);
+        doc.text(origenLinea1, 18, 20);
+        doc.setFont('Helvetica', 'Normal');
+        doc.text(origenLinea2, 18, 32);
+        doc.text(origenLinea3, 18, 44);
+
+        doc.setFont('Helvetica', 'Bold');
+        doc.setFontSize(10);
+        doc.text(`${pesoLb} LBS`, 220, 20, { align: 'right' });
+        doc.setFontSize(8);
+        doc.text('1 OF 1', 220, 32, { align: 'right' });
+
+        doc.setLineWidth(0.8);
+        doc.line(18, 54, 270, 54);
+
+        doc.setFontSize(9);
+        doc.setFont('Helvetica', 'Bold');
+        doc.text('SHIP TO:', 18, 70);
+
+        doc.setFont('Helvetica', 'Bold');
+        doc.setFontSize(11);
+        doc.text(destNombre.toUpperCase(), 18, 86);
+
+        doc.setFont('Helvetica', 'Normal');
+        doc.setFontSize(9);
+        doc.text(destDireccion.toUpperCase(), 18, 100);
+        doc.text(ciudadDestino.toUpperCase(), 18, 112);
+        doc.text(`TEL: ${destTelefono}`, 18, 124);
+        doc.text(`ID: ${destCedula}`, 18, 136);
+
+        doc.setLineWidth(1.2);
+        doc.rect(18, 150, 252, 80);
+
+        doc.setFont('Helvetica', 'Bold');
+        doc.setFontSize(24);
+        doc.text(codigoGuia.replace('-', ' '), 144, 188, { align: 'center' });
+
+        doc.setFontSize(9);
+        let etiquetaTipo = tipo.toUpperCase();
+        if (esConsolidado) {
+          etiquetaTipo += (etiquetaTipo ? ' • ' : '') + 'CONSOLIDADO';
+        } else {
+          etiquetaTipo += (etiquetaTipo ? ' • ' : '') + 'INDIVIDUAL';
+        }
+        doc.text(etiquetaTipo, 144, 204, { align: 'center' });
+
+        doc.setFontSize(8);
+        doc.setFont('Helvetica', 'Normal');
+        doc.text(`ENVÍO INTERNO: ${codigoEnvio}`, 144, 216, { align: 'center' });
+
+        const guiaParam = codigoGuia;
+        const trackingUrl = `https://ny.beloura.shop/ecuador.html?guia=${encodeURIComponent(guiaParam)}`;
+
+        const qrContainer = document.getElementById('qrcode');
+        qrContainer.innerHTML = '';
+        const qr = new QRCode(qrContainer, {
+          text: trackingUrl,
+          width: 120,
+          height: 120,
+          correctLevel: QRCode.CorrectLevel.M
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        const canvas = qrContainer.querySelector('canvas');
+        if (canvas) {
+          const dataUrl = canvas.toDataURL('image/png');
+          doc.addImage(dataUrl, 'PNG', 24, 242, 96, 96);
+        }
+
+        doc.setLineWidth(0.6);
+        const baseY = 260;
+        const barXStart = 140;
+        for (let i = 0; i < 20; i++) {
+          const x = barXStart + i * 3;
+          const h = (i % 2 === 0) ? 70 : 55;
+          doc.line(x, baseY, x, baseY + h);
+        }
+
+        doc.setFont('Helvetica', 'Normal');
+        doc.setFontSize(8);
+        doc.text(`TRACKING: ${codigoGuia}`, 200, 340, { align: 'center' });
+
+        doc.setLineWidth(0.6);
+        doc.line(18, 360, 270, 360);
+        doc.setFontSize(8);
+        doc.setFont('Helvetica', 'Bold');
+        doc.text('BELOURA COURIER', 18, 374);
+        doc.setFont('Helvetica', 'Normal');
+        doc.text('Guía interna para manejo logístico y entrega en Ecuador.', 18, 386);
+        doc.text('www.beloura.shop', 18, 398);
+
+        doc.save(`Guia_${codigoGuia}.pdf`);
+      } catch (e) {
+        console.error('Error generando PDF:', e);
+      }
+    }
+
+    // Carga inicial
+    document.addEventListener('DOMContentLoaded', () => {
+      loadClientes();
+      loadGuias();
     });
-
-    // Datos base
-    const pesoLb        = data.PesoLb || '';
-    const destNombre    = data.DestNombre || '';
-    const destCedula    = data.DestCedula || '';
-    const destTelefono  = data.DestTelefono || '';
-    const ciudadDestino = data.CiudadDestino || '';
-    const destDireccion = data.DestDireccion || '';
-    const tipo          = data.Tipo || '';
-    const estadoInicial = data.EstadoInicial || 'Recibido en bodega NY';
-
-    // Origen según estado inicial
-    let origenLinea1 = 'BELOURA COURIER';
-    let origenLinea2 = '';
-    let origenLinea3 = '';
-
-    if (estadoInicial === 'Recibido en Arlington TX') {
-      origenLinea2 = '2504 PLAZA ST';
-      origenLinea3 = 'ARLINGTON TX 76010';
-    } else {
-      origenLinea2 = 'BODEGA NY';
-      origenLinea3 = 'NEW YORK, NY';
-    }
-
-    // Cabecera (origen + peso)
-    doc.setFont('Helvetica', 'Bold');
-    doc.setFontSize(9);
-    doc.text(origenLinea1, 18, 20);
-    doc.setFont('Helvetica', 'Normal');
-    doc.text(origenLinea2, 18, 32);
-    doc.text(origenLinea3, 18, 44);
-
-    doc.setFont('Helvetica', 'Bold');
-    doc.setFontSize(10);
-    doc.text(`${pesoLb} LBS`, 220, 20, { align: 'right' });
-    doc.setFontSize(8);
-    doc.text('1 OF 1', 220, 32, { align: 'right' });
-
-    // Línea separadora
-    doc.setLineWidth(0.8);
-    doc.line(18, 54, 270, 54);
-
-    // SHIP TO
-    doc.setFontSize(9);
-    doc.setFont('Helvetica', 'Bold');
-    doc.text('SHIP TO:', 18, 70);
-
-    doc.setFont('Helvetica', 'Bold');
-    doc.setFontSize(11);
-    doc.text(destNombre.toUpperCase(), 18, 86);
-
-    doc.setFont('Helvetica', 'Normal');
-    doc.setFontSize(9);
-    doc.text(destDireccion.toUpperCase(), 18, 100);
-    doc.text(ciudadDestino.toUpperCase(), 18, 112);
-    doc.text(`TEL: ${destTelefono}`, 18, 124);
-    doc.text(`ID: ${destCedula}`, 18, 136);
-
-    // Cuadro grande con el código de guía (o de envío si es individual)
-    doc.setLineWidth(1.2);
-    doc.rect(18, 150, 252, 80); // x, y, width, height
-
-    doc.setFont('Helvetica', 'Bold');
-    doc.setFontSize(24);
-    doc.text(codigoGuia.replace('-', ' '), 144, 188, { align: 'center' });
-
-    doc.setFontSize(9);
-    let etiquetaTipo = tipo.toUpperCase();
-    if (esConsolidado) {
-      etiquetaTipo += (etiquetaTipo ? ' • ' : '') + 'CONSOLIDADO';
-    } else {
-      etiquetaTipo += (etiquetaTipo ? ' • ' : '') + 'INDIVIDUAL';
-    }
-    doc.text(etiquetaTipo, 144, 204, { align: 'center' });
-
-    // Mostrar código interno de envío pequeño debajo
-    doc.setFontSize(8);
-    doc.setFont('Helvetica', 'Normal');
-    doc.text(`ENVÍO INTERNO: ${codigoEnvio}`, 144, 216, { align: 'center' });
-
-    // QR apuntando a la página de Ecuador para esta guía
-    const guiaParam = codigoGuia;
-    const trackingUrl = `https://ny.beloura.shop/ecuador.html?guia=${encodeURIComponent(guiaParam)}`;
-
-    const qrContainer = document.getElementById('qrcode');
-    qrContainer.innerHTML = '';
-    const qr = new QRCode(qrContainer, {
-      text: trackingUrl,
-      width: 120,
-      height: 120,
-      correctLevel: QRCode.CorrectLevel.M
-    });
-
-    // Esperar un momento para que el canvas se genere
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    const canvas = qrContainer.querySelector('canvas');
-    if (canvas) {
-      const dataUrl = canvas.toDataURL('image/png');
-      // Posicionar QR debajo del cuadro del código
-      doc.addImage(dataUrl, 'PNG', 24, 242, 96, 96);
-    }
-
-    // “Código de barras” simple (placeholder visual)
-    doc.setLineWidth(0.6);
-    const baseY = 260;
-    const barXStart = 140;
-    const barXEnd = 260;
-    for (let i = 0; i < 20; i++) {
-      const x = barXStart + i * 3;
-      const h = (i % 2 === 0) ? 70 : 55;
-      doc.line(x, baseY, x, baseY + h);
-    }
-
-    doc.setFont('Helvetica', 'Normal');
-    doc.setFontSize(8);
-    doc.text(`TRACKING: ${codigoGuia}`, 200, 340, { align: 'center' });
-
-    // Pie con marca
-    doc.setLineWidth(0.6);
-    doc.line(18, 360, 270, 360);
-    doc.setFontSize(8);
-    doc.setFont('Helvetica', 'Bold');
-    doc.text('BELOURA COURIER', 18, 374);
-    doc.setFont('Helvetica', 'Normal');
-    doc.text('Guía interna para manejo logístico y entrega en Ecuador.', 18, 386);
-    doc.text('www.beloura.shop', 18, 398);
-
-    // Descargar
-    doc.save(`Guia_${codigoGuia}.pdf`);
-  } catch (e) {
-    console.error('Error generando PDF:', e);
-    // No romper flujo si falla el PDF
-  }
-}
-}
-// Cargar guías disponibles al abrir el panel
-loadGuias();
-
   </script>
+
   <div id="qrcode" style="display:none;"></div>
 </body>
 </html>
