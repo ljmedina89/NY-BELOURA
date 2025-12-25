@@ -1,0 +1,162 @@
+<!-- FACTURA.html (FRONT LISTO) - PÉGALO EN TU HOSTING / WEB (no en Apps Script) -->
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BELOURA NY • Facturación</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#0b1220;color:#e2e8f0}
+    .wrap{max-width:900px;margin:0 auto;padding:22px 16px}
+    .card{background:#0f172a;border:1px solid #334155;border-radius:16px;padding:18px}
+    h1{margin:0 0 10px;font-size:20px}
+    .grid{display:grid;gap:12px}
+    @media(min-width:820px){.grid-2{grid-template-columns:1fr 1fr}}
+    label{display:block;font-size:13px;color:#cbd5e1;margin-bottom:6px}
+    input,select{width:100%;padding:12px;border-radius:12px;border:1px solid #334155;background:#0b1220;color:#e2e8f0}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    button{padding:12px 14px;border-radius:12px;border:1px solid #334155;background:#111c33;color:#e2e8f0;cursor:pointer}
+    button.primary{border-color:#60a5fa}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .status{margin-top:12px;font-size:13px;color:#cbd5e1}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>BELOURA NY • Facturación</h1>
+
+    <div class="grid grid-2">
+      <div>
+        <label>Cliente</label>
+        <select id="cliente"></select>
+      </div>
+
+      <div>
+        <label>Tarifa</label>
+        <select id="tarifa"></select>
+      </div>
+
+      <div>
+        <label>Peso (LB)</label>
+        <input id="peso" type="number" step="0.01" min="0" placeholder="Ej: 8.50" />
+      </div>
+
+      <div>
+        <label>Total</label>
+        <input id="total" type="text" readonly placeholder="$0.00" />
+      </div>
+    </div>
+
+    <div class="row">
+      <button id="btnLoad">Recargar listas</button>
+      <button id="btnSave" class="primary">Guardar y generar PDF</button>
+    </div>
+
+    <div class="status" id="status">Listo.</div>
+  </div>
+</div>
+
+<script>
+  // 1) PEGA aquí tu URL del WebApp (la misma que ya usas para createEnvio/createCliente)
+  const API_URL = "https://script.google.com/macros/s/AKfycbzjkDPdv3-UeEFf_6ujbTcZO7Em4v3J9hdU7mSUZCnmY4WODMHbprf7gus8xJvHC_YzHQ/exec";
+
+  // 2) Debe ser EXACTAMENTE el mismo del backend
+  const SECRET_KEY = "Beloura2025@";
+
+  const $ = (id) => document.getElementById(id);
+  let clientes = [];
+  let tarifas = [];
+
+  function setStatus(msg){ $("status").textContent = msg; }
+
+  function money(n){
+    const x = Number(n);
+    if (!isFinite(x)) return "$0.00";
+    return x.toLocaleString("en-US",{style:"currency",currency:"USD"});
+  }
+
+  async function api(payload){
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+    return res.json();
+  }
+
+  function recalc(){
+    const peso = Number($("peso").value);
+    const t = tarifas[Number($("tarifa").value)];
+    const total = (peso > 0 && t) ? (peso * Number(t.Valor)) : 0;
+    $("total").value = money(Math.round((total + Number.EPSILON) * 100) / 100);
+  }
+
+  async function loadAll(){
+    setStatus("Cargando clientes y tarifas...");
+    $("btnSave").disabled = true;
+
+    const c = await api({ action:"listClientes", secretKey: SECRET_KEY });
+    if (!c.ok) { setStatus("Error clientes: " + (c.error || "unknown")); $("btnSave").disabled=false; return; }
+    clientes = c.clientes || [];
+
+    $("cliente").innerHTML = clientes.map((x,i)=>(
+      `<option value="${i}">${x.CodigoCliente} - ${x.NombreCompleto}</option>`
+    )).join("");
+
+    const t = await api({ action:"listTarifas", secretKey: SECRET_KEY });
+    if (!t.ok) { setStatus("Error tarifas: " + (t.error || "unknown")); $("btnSave").disabled=false; return; }
+    tarifas = t.tarifas || [];
+
+    $("tarifa").innerHTML = tarifas.map((x,i)=>(
+      `<option value="${i}">${x.Tarifa} (${money(x.Valor)}/lb)</option>`
+    )).join("");
+
+    $("btnSave").disabled = false;
+    recalc();
+    setStatus(`Listo. Clientes: ${clientes.length} • Tarifas: ${tarifas.length}`);
+  }
+
+  async function saveFactura(){
+    const c = clientes[Number($("cliente").value)];
+    const t = tarifas[Number($("tarifa").value)];
+    const peso = Number($("peso").value);
+
+    if (!c) return setStatus("Selecciona un cliente válido.");
+    if (!t) return setStatus("Selecciona una tarifa válida.");
+    if (!(peso > 0)) return setStatus("Ingresa un peso válido.");
+
+    $("btnSave").disabled = true;
+    setStatus("Guardando factura y generando PDF...");
+
+    const r = await api({
+      action: "createFactura",
+      secretKey: SECRET_KEY,
+      CodigoCliente: c.CodigoCliente,
+      Peso: peso,
+      Tarifa: t.Tarifa
+    });
+
+    $("btnSave").disabled = false;
+
+    if (!r.ok) return setStatus("Error: " + (r.error || "unknown"));
+
+    $("peso").value = "";
+    recalc();
+
+    setStatus(`Factura guardada. Total ${money(r.factura.total)} • PDF generado.`);
+
+    if (r.pdfUrl) {
+      window.open(r.pdfUrl, "_blank");
+    }
+  }
+
+  $("btnLoad").addEventListener("click", loadAll);
+  $("btnSave").addEventListener("click", saveFactura);
+  $("peso").addEventListener("input", recalc);
+  $("tarifa").addEventListener("change", recalc);
+
+  loadAll();
+</script>
+</body>
+</html>
