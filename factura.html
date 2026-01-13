@@ -1,4 +1,3 @@
-<!-- FACTURA.html (FRONT LISTO) - PÉGALO EN TU HOSTING / WEB (no en Apps Script) -->
 <!doctype html>
 <html lang="es">
 <head>
@@ -18,7 +17,8 @@
     button{padding:12px 14px;border-radius:12px;border:1px solid #334155;background:#111c33;color:#e2e8f0;cursor:pointer}
     button.primary{border-color:#60a5fa}
     button:disabled{opacity:.55;cursor:not-allowed}
-    .status{margin-top:12px;font-size:13px;color:#cbd5e1}
+    .status{margin-top:12px;font-size:13px;color:#cbd5e1;white-space:pre-line}
+    .pill{display:inline-block;padding:6px 10px;border:1px solid #334155;border-radius:999px;background:#0b1220;color:#cbd5e1;font-size:12px}
   </style>
 </head>
 <body>
@@ -46,11 +46,27 @@
         <label>Total</label>
         <input id="total" type="text" readonly placeholder="$0.00" />
       </div>
+
+      <div>
+        <label>Estado</label>
+        <select id="estado">
+          <option value="Pendiente">Pendiente</option>
+          <option value="Pagado">Pagado</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Tracking / Guía (opcional)</label>
+        <input id="tracking" type="text" placeholder="Ej: BLR-2026-000123 / USPS..." />
+      </div>
     </div>
 
     <div class="row">
       <button id="btnLoad">Recargar listas</button>
       <button id="btnSave" class="primary">Guardar y generar PDF</button>
+      <button id="btnWhats" disabled>Enviar por WhatsApp</button>
+      <button id="btnVerify" disabled>Verificar</button>
+      <span class="pill" id="lastCode" style="display:none;"></span>
     </div>
 
     <div class="status" id="status">Listo.</div>
@@ -58,15 +74,22 @@
 </div>
 
 <script>
-  // 1) PEGA aquí tu URL del WebApp (la misma que ya usas para createEnvio/createCliente)
-  const API_URL = "https://script.google.com/macros/s/AKfycbwg0gs8be8WO-EVT6xRlvaCX5MM-qjhS9XJ7jQsSV1mauxvmeOF94VIE57FCQKkxRuVWw/exec";
+  // WebApp URL (tu /exec)
+  const API_URL = "https://script.google.com/macros/s/AKfycbzyeCABuE4Qv3V-IBowm-0IX9GPOo6ktYYKIH_buKoHXnTkkM22JjcR7ZFNCqSgHlkh/exec";
 
-  // 2) Debe ser EXACTAMENTE el mismo del backend
+  // Debe coincidir con backend
   const SECRET_KEY = "Beloura2025@";
+
+  // Si hosteas verify externo (recomendado), pon aquí tu URL:
+  // Ej: "https://beloura.shop/verify.html"
+  // Si lo dejas vacío, usará verify interno del WebApp (si el backend lo soporta).
+  const VERIFY_PAGE_URL = ""; 
 
   const $ = (id) => document.getElementById(id);
   let clientes = [];
   let tarifas = [];
+
+  let lastFactura = null; // guarda {codigoFactura, pdfUrl, verifyUrl, whatsappText}
 
   function setStatus(msg){ $("status").textContent = msg; }
 
@@ -77,9 +100,10 @@
   }
 
   async function api(payload){
+    // Evita preflight usando text/plain
     const res = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type":"application/json" },
+      headers: { "Content-Type":"text/plain;charset=utf-8" },
       body: JSON.stringify(payload)
     });
     return res.json();
@@ -95,6 +119,10 @@
   async function loadAll(){
     setStatus("Cargando clientes y tarifas...");
     $("btnSave").disabled = true;
+    $("btnWhats").disabled = true;
+    $("btnVerify").disabled = true;
+    $("lastCode").style.display = "none";
+    lastFactura = null;
 
     const c = await api({ action:"listClientes", secretKey: SECRET_KEY });
     if (!c.ok) { setStatus("Error clientes: " + (c.error || "unknown")); $("btnSave").disabled=false; return; }
@@ -117,16 +145,32 @@
     setStatus(`Listo. Clientes: ${clientes.length} • Tarifas: ${tarifas.length}`);
   }
 
+  function buildVerifyUrl(code){
+    if (VERIFY_PAGE_URL && VERIFY_PAGE_URL.startsWith("http")) {
+      const sep = VERIFY_PAGE_URL.includes("?") ? "&" : "?";
+      return `${VERIFY_PAGE_URL}${sep}code=${encodeURIComponent(code)}`;
+    }
+    // fallback: verify interno del WebApp
+    return `${API_URL}?page=verify&code=${encodeURIComponent(code)}`;
+  }
+
   async function saveFactura(){
     const c = clientes[Number($("cliente").value)];
     const t = tarifas[Number($("tarifa").value)];
     const peso = Number($("peso").value);
+    const estado = $("estado").value;
+    const tracking = $("tracking").value.trim();
 
     if (!c) return setStatus("Selecciona un cliente válido.");
     if (!t) return setStatus("Selecciona una tarifa válida.");
     if (!(peso > 0)) return setStatus("Ingresa un peso válido.");
 
     $("btnSave").disabled = true;
+    $("btnWhats").disabled = true;
+    $("btnVerify").disabled = true;
+    $("lastCode").style.display = "none";
+    lastFactura = null;
+
     setStatus("Guardando factura y generando PDF...");
 
     const r = await api({
@@ -134,25 +178,62 @@
       secretKey: SECRET_KEY,
       CodigoCliente: c.CodigoCliente,
       Peso: peso,
-      Tarifa: t.Tarifa
+      Tarifa: t.Tarifa,
+      Estado: estado,
+      Tracking: tracking
     });
 
     $("btnSave").disabled = false;
 
-    if (!r.ok) return setStatus("Error: " + (r.error || "unknown"));
+    if (!r.ok) {
+      setStatus("Error: " + (r.error || "unknown"));
+      return;
+    }
 
     $("peso").value = "";
+    $("tracking").value = "";
     recalc();
 
-    setStatus(`Factura guardada. Total ${money(r.factura.total)} • PDF generado.`);
+    const code = r.factura?.codigoFactura || "";
+    const pdfUrl = r.pdfUrl || r.factura?.pdfUrl || "";
+    const verifyUrl = r.verifyUrl || r.factura?.verifyUrl || buildVerifyUrl(code);
+    const waText = r.whatsappText || "";
 
-    if (r.pdfUrl) {
-      window.open(r.pdfUrl, "_blank");
-    }
+    lastFactura = { code, pdfUrl, verifyUrl, waText };
+
+    $("lastCode").textContent = `Última: ${code}`;
+    $("lastCode").style.display = code ? "inline-block" : "none";
+
+    $("btnWhats").disabled = !waText;
+    $("btnVerify").disabled = !verifyUrl;
+
+    setStatus(
+      `Factura guardada.\n` +
+      `Código: ${code}\n` +
+      `Total: ${money(r.factura.total)}\n` +
+      (pdfUrl ? `PDF: listo\n` : ``) +
+      (verifyUrl ? `Verificación: lista` : ``)
+    );
+
+    if (pdfUrl) window.open(pdfUrl, "_blank");
+  }
+
+  function sendWhatsApp(){
+    if (!lastFactura?.waText) return;
+    // Si tienes número fijo, puedes armar wa.me/<numero>; aquí lo dejamos a "share" genérico
+    const url = `https://wa.me/?text=${encodeURIComponent(lastFactura.waText)}`;
+    window.open(url, "_blank");
+  }
+
+  function openVerify(){
+    if (!lastFactura?.verifyUrl) return;
+    window.open(lastFactura.verifyUrl, "_blank");
   }
 
   $("btnLoad").addEventListener("click", loadAll);
   $("btnSave").addEventListener("click", saveFactura);
+  $("btnWhats").addEventListener("click", sendWhatsApp);
+  $("btnVerify").addEventListener("click", openVerify);
   $("peso").addEventListener("input", recalc);
   $("tarifa").addEventListener("change", recalc);
 
