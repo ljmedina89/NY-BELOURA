@@ -100,14 +100,18 @@
   }
 
   async function api(payload){
-    // Evita preflight usando text/plain
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type":"text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
-    });
-    return res.json();
-  }
+  const form = new URLSearchParams();
+  form.set("payload", JSON.stringify(payload));
+
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type":"application/x-www-form-urlencoded;charset=UTF-8" },
+    body: form.toString()
+  });
+
+  return res.json();
+}
+
 
   function recalc(){
     const peso = Number($("peso").value);
