@@ -59,7 +59,7 @@
     .section-title{
       font-size:0.9rem;
       font-weight:600;
-      margin:12px 0 4px;
+      margin:18px 0 6px;
       text-transform:uppercase;
       letter-spacing:0.05em;
       color:#9ca3af;
@@ -146,10 +146,11 @@
       min-height:52px;
     }
   </style>
-  <!-- jsPDF para generar el PDF de la guía -->
+
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
+
 <body>
   <div class="wrap">
     <header>
@@ -165,10 +166,10 @@
       <button class="tab-btn" data-tab="tab-envio">📦 Registrar envío</button>
     </div>
 
-    <!-- TAB CLIENTE -->
     <section id="tab-cliente" class="card">
       <form id="formCliente">
-        <div class="section-title">Datos del cliente (Ecuador)</div>
+        <div class="section-title">Datos del cliente / persona</div>
+
         <div class="grid grid-2">
           <div>
             <label for="cliNombre">Nombre completo</label>
@@ -197,7 +198,7 @@
 
         <div class="grid grid-2" style="margin-top:10px;">
           <div>
-            <label for="cliCiudad">Ciudad Residencia</label>
+            <label for="cliCiudad">Ciudad residencia</label>
             <input id="cliCiudad" name="CiudadDestino" required placeholder="Babahoyo, Guayaquil, etc." />
           </div>
           <div>
@@ -207,7 +208,7 @@
         </div>
 
         <div style="margin-top:10px;">
-          <label for="cliNotas">Notas (opcional)</label>
+          <label for="cliNotas">Notas</label>
           <textarea id="cliNotas" name="Notas" placeholder="Cliente recomendado, frecuencia, etc."></textarea>
         </div>
 
@@ -221,42 +222,132 @@
       </form>
     </section>
 
-    <!-- TAB ENVÍO -->
     <section id="tab-envio" class="card" style="display:none;">
       <form id="formEnvio">
-        <div class="section-title">Datos del cliente</div>
+
+        <div class="section-title">Afiliado / vendedor</div>
         <div class="grid grid-2">
           <div>
-            <label for="SelectCliente">Cliente</label>
-            <select id="SelectCliente" required>
-              <option value="">Seleccionar cliente…</option>
+            <label for="SelectAfiliado">Afiliado que vendió el servicio</label>
+            <select id="SelectAfiliado" name="AFILIADO_ID">
+              <option value="">Venta directa BELOURA / Sin afiliado</option>
             </select>
-            <span class="small muted">La lista se llena con los clientes registrados.</span>
+            <span class="small muted">Selecciona el afiliado para vincular el envío a su dashboard.</span>
           </div>
           <div>
-            <label>Información del cliente</label>
-            <div id="ClienteInfo" class="cliente-info-box">
-              Selecciona un cliente para ver sus datos (nombre, cédula, teléfono, ciudad, dirección).
+            <label>Información del afiliado</label>
+            <div id="AfiliadoInfo" class="cliente-info-box">
+              Venta directa BELOURA.
             </div>
           </div>
         </div>
 
-        <!-- input oculto para llevar el CódigoCliente al payload -->
-        <input type="hidden" id="CodigoCliente" name="CodigoCliente" />
-
         <div class="section-title">Remitente / origen</div>
-        <div class="grid grid-3">
+        <div class="grid grid-2">
+          <div>
+            <label for="SelectRemitente">Seleccionar remitente</label>
+            <select id="SelectRemitente" required>
+              <option value="">Seleccionar remitente…</option>
+            </select>
+          </div>
+          <div>
+            <label>Información del remitente</label>
+            <div id="RemitenteInfo" class="cliente-info-box">
+              Selecciona un remitente para autocompletar sus datos.
+            </div>
+          </div>
+        </div>
+
+        <input type="hidden" id="CodigoRemitente" name="CodigoRemitente" />
+
+        <div class="grid grid-3" style="margin-top:10px;">
           <div>
             <label for="RemitenteNombre">Nombre remitente</label>
             <input id="RemitenteNombre" name="RemitenteNombre" required />
           </div>
           <div>
+            <label for="RemitenteCedula">Cédula remitente</label>
+            <input id="RemitenteCedula" name="RemitenteCedula" />
+          </div>
+          <div>
             <label for="RemitenteTelefono">Teléfono remitente</label>
             <input id="RemitenteTelefono" name="RemitenteTelefono" required />
           </div>
+        </div>
+
+        <div class="grid grid-3" style="margin-top:10px;">
+          <div>
+            <label for="RemitenteEmail">Email remitente</label>
+            <input id="RemitenteEmail" name="RemitenteEmail" />
+          </div>
+          <div>
+            <label for="RemitenteCiudad">Ciudad remitente</label>
+            <input id="RemitenteCiudad" name="RemitenteCiudad" />
+          </div>
           <div>
             <label for="TiendaOrigen">Tienda origen</label>
-            <input id="TiendaOrigen" name="TiendaOrigen" placeholder="Amazon, Shein, etc." />
+            <input id="TiendaOrigen" name="TiendaOrigen" placeholder="Amazon, Shein, Enviworld, etc." />
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <label for="RemitenteDireccion">Dirección remitente</label>
+          <input id="RemitenteDireccion" name="RemitenteDireccion" />
+        </div>
+
+        <div class="section-title">Destinatario en Ecuador</div>
+        <div class="grid grid-2">
+          <div>
+            <label for="SelectDestinatario">Seleccionar destinatario</label>
+            <select id="SelectDestinatario" required>
+              <option value="">Seleccionar destinatario…</option>
+            </select>
+          </div>
+          <div>
+            <label>Información del destinatario</label>
+            <div id="DestinatarioInfo" class="cliente-info-box">
+              Selecciona un destinatario para autocompletar sus datos.
+            </div>
+          </div>
+        </div>
+
+        <input type="hidden" id="CodigoDestinatario" name="CodigoDestinatario" />
+        <input type="hidden" id="CodigoCliente" name="CodigoCliente" />
+
+        <div class="grid grid-2" style="margin-top:10px;">
+          <div>
+            <label for="DestNombre">Nombre completo</label>
+            <input id="DestNombre" name="DestNombre" required />
+          </div>
+          <div>
+            <label for="DestCedula">Cédula</label>
+            <input id="DestCedula" name="DestCedula" required />
+          </div>
+        </div>
+
+        <div class="grid grid-3" style="margin-top:10px;">
+          <div>
+            <label for="DestTelefono">Teléfono</label>
+            <input id="DestTelefono" name="DestTelefono" required />
+          </div>
+          <div>
+            <label for="DestEmail">Email</label>
+            <input id="DestEmail" name="DestEmail" />
+          </div>
+          <div>
+            <label for="CiudadDestino">Ciudad destino</label>
+            <input id="CiudadDestino" name="CiudadDestino" required placeholder="Guayaquil, Babahoyo, etc." />
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="margin-top:10px;">
+          <div>
+            <label for="DestDireccion">Dirección completa</label>
+            <input id="DestDireccion" name="DestDireccion" required placeholder="Calle, número, intersección..." />
+          </div>
+          <div>
+            <label for="DestReferencia">Referencia</label>
+            <input id="DestReferencia" name="DestReferencia" placeholder="Barrio, esquina, local cercano..." />
           </div>
         </div>
 
@@ -276,79 +367,47 @@
           </div>
         </div>
 
-       <div class="grid grid-2" style="margin-top:10px;">
-  <div>
-    <label for="Tipo">Tipo de envío</label>
-    <select id="Tipo" name="Tipo" required>
-      <option value="">Seleccionar…</option>
-      <option value="4x4">4x4</option>
-      <option value="Ropa">Ropa</option>
-      <option value="Zapatos">Zapatos</option>
-      <option value="Electronico">Electrónico</option>
-      <option value="Mixto">Mixto</option>
-      <option value="Otro">Otro</option>
-    </select>
-  </div>
-  <div>
-    <label for="EstadoInicial">Estado inicial</label>
-    <select id="EstadoInicial" name="EstadoInicial" required>
-      <option value="Recibido en bodega NY">Recibido en bodega NY</option>
-      <option value="Recibido en Arlington TX">Recibido en Arlington TX</option>
-    </select>
-  </div>
-</div>
-
-<div class="grid grid-2" style="margin-top:10px;">
-  <div>
-    <label for="TrackingInterno">Tracking interno (opcional)</label>
-    <input id="TrackingInterno" name="TrackingInterno" placeholder="Tracking Miami/Guayaquil, etc." />
-  </div>
-  <div>
-    <label for="CodigoGuiaSelect">Consolidar en guía (opcional)</label>
-    <select id="CodigoGuiaSelect" name="CodigoGuiaSelect">
-      <option value="">Sin consolidar (guía individual)</option>
-    </select>
-    <span class="small muted">
-      Si este envío forma parte de un paquete consolidado, selecciona aquí el código de guía existente.
-    </span>
-  </div>
-</div>
-
-        <div class="section-title">Destinatario en Ecuador</div>
-        <div class="grid grid-2">
+        <div class="grid grid-2" style="margin-top:10px;">
           <div>
-            <label for="DestNombre">Nombre completo</label>
-            <input id="DestNombre" name="DestNombre" required />
+            <label for="Tipo">Tipo de envío</label>
+            <select id="Tipo" name="Tipo" required>
+              <option value="">Seleccionar…</option>
+              <option value="4x4">4x4</option>
+              <option value="Ropa">Ropa</option>
+              <option value="Zapatos">Zapatos</option>
+              <option value="Electronico">Electrónico</option>
+              <option value="Mixto">Mixto</option>
+              <option value="Otro">Otro</option>
+            </select>
           </div>
           <div>
-            <label for="DestCedula">Cédula</label>
-            <input id="DestCedula" name="DestCedula" required />
+            <label for="EstadoInicial">Estado inicial</label>
+            <select id="EstadoInicial" name="EstadoInicial" required>
+              <option value="Recibido en bodega NY">Recibido en bodega NY</option>
+              <option value="Recibido en Arlington TX">Recibido en Arlington TX</option>
+            </select>
           </div>
         </div>
 
-        <div class="grid grid-3">
+        <div class="grid grid-2" style="margin-top:10px;">
           <div>
-            <label for="DestTelefono">Teléfono</label>
-            <input id="DestTelefono" name="DestTelefono" required />
+            <label for="TrackingInterno">Tracking interno Enviworld</label>
+            <input id="TrackingInterno" name="TrackingInterno" placeholder="Tracking Enviworld / guía externa" />
           </div>
           <div>
-            <label for="CiudadDestino">Ciudad destino</label>
-            <input id="CiudadDestino" name="CiudadDestino" required placeholder="Guayaquil, Babahoyo, etc." />
+            <label for="CodigoGuiaSelect">Consolidar en guía</label>
+            <select id="CodigoGuiaSelect" name="CodigoGuiaSelect">
+              <option value="">Sin consolidar (guía individual)</option>
+            </select>
+            <span class="small muted">
+              Si este envío forma parte de un paquete consolidado, selecciona aquí el código de guía existente.
+            </span>
           </div>
-          <div>
-            <label for="DestReferencia">Referencia (opcional)</label>
-            <input id="DestReferencia" name="DestReferencia" placeholder="Barrio, esquina, local cercano..." />
-          </div>
-        </div>
-
-        <div style="margin-top:10px;">
-          <label for="DestDireccion">Dirección completa</label>
-          <input id="DestDireccion" name="DestDireccion" required placeholder="Calle, número, intersección..." />
         </div>
 
         <div class="section-title">Notas internas</div>
         <div>
-          <label for="Observacion">Observación (opcional)</label>
+          <label for="Observacion">Observación</label>
           <textarea id="Observacion" name="Observacion" placeholder="Instrucciones especiales, pago pendiente, etc."></textarea>
         </div>
 
@@ -363,13 +422,13 @@
     </section>
   </div>
 
-    <script>
+  <script>
     const API_URL   = "https://script.google.com/macros/s/AKfycbwg0gs8be8WO-EVT6xRlvaCX5MM-qjhS9XJ7jQsSV1mauxvmeOF94VIE57FCQKkxRuVWw/exec";
     const SECRET_KEY = "Beloura2025@";
 
     const clientesCache = {};
+    const afiliadosCache = {};
 
-    // Tabs
     const tabs = document.querySelectorAll('.tab-btn');
     const tabSections = {
       'tab-cliente': document.getElementById('tab-cliente'),
@@ -386,63 +445,159 @@
       });
     });
 
-    // Helpers alertas
     function showAlert(element, message, ok) {
       element.style.display = 'block';
       element.textContent = message;
       element.className = 'alert ' + (ok ? 'alert-ok' : 'alert-error');
     }
+
     function clearAlert(element) {
       element.style.display = 'none';
       element.textContent = '';
     }
 
-    /*********** SELECT CLIENTES ***********/
-    const selectCliente = document.getElementById('SelectCliente');
+    async function postAPI(payload) {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    }
+
+    const selectAfiliado = document.getElementById('SelectAfiliado');
+    const afiliadoInfoDiv = document.getElementById('AfiliadoInfo');
+
+    const selectRemitente = document.getElementById('SelectRemitente');
+    const selectDestinatario = document.getElementById('SelectDestinatario');
+
+    const hiddenCodigoRemitente = document.getElementById('CodigoRemitente');
+    const hiddenCodigoDestinatario = document.getElementById('CodigoDestinatario');
     const hiddenCodigoCliente = document.getElementById('CodigoCliente');
-    const clienteInfoDiv = document.getElementById('ClienteInfo');
+
+    const remitenteInfoDiv = document.getElementById('RemitenteInfo');
+    const destinatarioInfoDiv = document.getElementById('DestinatarioInfo');
 
     async function loadClientes() {
       try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify({
-            action: 'listClientes',
-            secretKey: SECRET_KEY
-          })
+        const data = await postAPI({
+          action: 'listClientes',
+          secretKey: SECRET_KEY
         });
-        const data = await res.json();
+
         if (!data.ok) {
           console.error('Error listClientes:', data.error);
           return;
         }
+
         const clientes = data.clientes || [];
-        selectCliente.innerHTML = '<option value="">Seleccionar cliente…</option>';
 
-// limpiar el cache sin reasignar la constante
-Object.keys(clientesCache).forEach(k => delete clientesCache[k]);
+        selectRemitente.innerHTML = '<option value="">Seleccionar remitente…</option>';
+        selectDestinatario.innerHTML = '<option value="">Seleccionar destinatario…</option>';
 
-clientes.forEach(c => {
-  if (!c.CodigoCliente) return;
-  clientesCache[c.CodigoCliente] = c;
-  const opt = document.createElement('option');
-  opt.value = c.CodigoCliente;
-  opt.textContent = c.CodigoCliente + ' – ' + (c.NombreCompleto || '');
-  selectCliente.appendChild(opt);
-});
+        Object.keys(clientesCache).forEach(k => delete clientesCache[k]);
+
+        clientes.forEach(c => {
+          const codigo = c.CodigoCliente || c.codigoCliente || '';
+          if (!codigo) return;
+
+          const normalizado = {
+            CodigoCliente: codigo,
+            NombreCompleto: c.NombreCompleto || c.nombre || c.Nombre || '',
+            Cedula: c.Cedula || c.cedula || '',
+            Telefono: c.Telefono || c.telefono || '',
+            WhatsApp: c.WhatsApp || c.whatsapp || '',
+            Email: c.Email || c.email || c.Correo || c.correo || '',
+            CiudadDestino: c.CiudadDestino || c.ciudad || c.Ciudad || '',
+            Direccion: c.Direccion || c.direccion || '',
+            Notas: c.Notas || c.notas || ''
+          };
+
+          clientesCache[codigo] = normalizado;
+
+          const label = `${codigo} – ${normalizado.NombreCompleto}`;
+
+          const optR = document.createElement('option');
+          optR.value = codigo;
+          optR.textContent = label;
+          selectRemitente.appendChild(optR);
+
+          const optD = document.createElement('option');
+          optD.value = codigo;
+          optD.textContent = label;
+          selectDestinatario.appendChild(optD);
+        });
+
       } catch (err) {
         console.error('Error al cargar clientes:', err);
       }
     }
 
-    function renderClienteInfo(code) {
-      if (!code || !clientesCache[code]) {
-        clienteInfoDiv.textContent = 'Selecciona un cliente para ver sus datos (nombre, cédula, teléfono, ciudad, dirección).';
+    async function loadAfiliados() {
+      try {
+        const data = await postAPI({
+          action: 'listarAfiliados',
+          secretKey: SECRET_KEY
+        });
+
+        if (!data.ok) {
+          console.warn('No se pudieron cargar afiliados:', data.error);
+          return;
+        }
+
+        const afiliados = data.afiliados || [];
+
+        selectAfiliado.innerHTML = '<option value="">Venta directa BELOURA / Sin afiliado</option>';
+
+        Object.keys(afiliadosCache).forEach(k => delete afiliadosCache[k]);
+
+        afiliados.forEach(a => {
+          const codigo = a.codigoAfiliado || a.CodigoAfiliado || '';
+          if (!codigo) return;
+
+          afiliadosCache[codigo] = {
+            codigoAfiliado: codigo,
+            nombre: a.nombre || a.Nombre || '',
+            telefono: a.telefono || a.Telefono || '',
+            ciudad: a.ciudad || a.Ciudad || '',
+            estado: a.estado || a.Estado || ''
+          };
+
+          const opt = document.createElement('option');
+          opt.value = codigo;
+          opt.textContent = `${codigo} – ${afiliadosCache[codigo].nombre}`;
+          selectAfiliado.appendChild(opt);
+        });
+
+      } catch (err) {
+        console.error('Error al cargar afiliados:', err);
+      }
+    }
+
+    function renderAfiliadoInfo(code) {
+      if (!code || !afiliadosCache[code]) {
+        afiliadoInfoDiv.textContent = 'Venta directa BELOURA.';
         return;
       }
+
+      const a = afiliadosCache[code];
+      afiliadoInfoDiv.innerHTML = `
+        <strong>${a.nombre || ''}</strong><br/>
+        Código: ${a.codigoAfiliado || ''}<br/>
+        Tel: ${a.telefono || ''}<br/>
+        Ciudad: ${a.ciudad || ''}
+      `;
+    }
+
+    function renderPersonaInfo(div, code, tipo) {
+      if (!code || !clientesCache[code]) {
+        div.textContent = `Selecciona un ${tipo} para ver sus datos.`;
+        return;
+      }
+
       const c = clientesCache[code];
-      clienteInfoDiv.innerHTML = `
+      div.innerHTML = `
         <strong>${c.NombreCompleto || ''}</strong><br/>
+        Código: ${c.CodigoCliente || ''}<br/>
         Cédula: ${c.Cedula || ''}<br/>
         Tel: ${c.Telefono || ''}<br/>
         Ciudad: ${c.CiudadDestino || ''}<br/>
@@ -450,13 +605,51 @@ clientes.forEach(c => {
       `;
     }
 
-    selectCliente.addEventListener('change', () => {
-      const code = selectCliente.value;
-      hiddenCodigoCliente.value = code;
-      renderClienteInfo(code);
+    function autocompletarRemitente(code) {
+      const c = clientesCache[code];
+      if (!c) return;
+
+      hiddenCodigoRemitente.value = c.CodigoCliente || '';
+
+      document.getElementById('RemitenteNombre').value = c.NombreCompleto || '';
+      document.getElementById('RemitenteCedula').value = c.Cedula || '';
+      document.getElementById('RemitenteTelefono').value = c.Telefono || c.WhatsApp || '';
+      document.getElementById('RemitenteEmail').value = c.Email || '';
+      document.getElementById('RemitenteCiudad').value = c.CiudadDestino || '';
+      document.getElementById('RemitenteDireccion').value = c.Direccion || '';
+
+      renderPersonaInfo(remitenteInfoDiv, code, 'remitente');
+    }
+
+    function autocompletarDestinatario(code) {
+      const c = clientesCache[code];
+      if (!c) return;
+
+      hiddenCodigoDestinatario.value = c.CodigoCliente || '';
+      hiddenCodigoCliente.value = c.CodigoCliente || '';
+
+      document.getElementById('DestNombre').value = c.NombreCompleto || '';
+      document.getElementById('DestCedula').value = c.Cedula || '';
+      document.getElementById('DestTelefono').value = c.Telefono || c.WhatsApp || '';
+      document.getElementById('DestEmail').value = c.Email || '';
+      document.getElementById('CiudadDestino').value = c.CiudadDestino || '';
+      document.getElementById('DestDireccion').value = c.Direccion || '';
+
+      renderPersonaInfo(destinatarioInfoDiv, code, 'destinatario');
+    }
+
+    selectAfiliado.addEventListener('change', () => {
+      renderAfiliadoInfo(selectAfiliado.value);
     });
 
-    /*********** SELECT GUIAS ***********/
+    selectRemitente.addEventListener('change', () => {
+      autocompletarRemitente(selectRemitente.value);
+    });
+
+    selectDestinatario.addEventListener('change', () => {
+      autocompletarDestinatario(selectDestinatario.value);
+    });
+
     async function loadGuias() {
       const selectGuia = document.getElementById('CodigoGuiaSelect');
       if (!selectGuia) return;
@@ -464,15 +657,11 @@ clientes.forEach(c => {
       selectGuia.innerHTML = '<option value="">Sin consolidar (guía individual)</option>';
 
       try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify({
-            action: 'listGuias',
-            secretKey: SECRET_KEY
-          })
+        const data = await postAPI({
+          action: 'listGuias',
+          secretKey: SECRET_KEY
         });
 
-        const data = await res.json();
         if (!data.ok) {
           console.warn('No se pudieron cargar guías:', data.error);
           return;
@@ -490,7 +679,6 @@ clientes.forEach(c => {
       }
     }
 
-    /*********** CLIENTE ***********/
     const formCliente = document.getElementById('formCliente');
     const btnGuardarCliente = document.getElementById('btnGuardarCliente');
     const btnLimpiarCliente = document.getElementById('btnLimpiarCliente');
@@ -523,11 +711,7 @@ clientes.forEach(c => {
       btnGuardarCliente.textContent = 'Guardando...';
 
       try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
+        const data = await postAPI(payload);
 
         if (!data.ok) {
           showAlert(alertCliente, 'Error al guardar cliente: ' + (data.error || 'desconocido'), false);
@@ -539,7 +723,6 @@ clientes.forEach(c => {
             true
           );
           formCliente.reset();
-          // recargar lista de clientes en el select de envíos
           loadClientes();
         }
       } catch (err) {
@@ -551,7 +734,6 @@ clientes.forEach(c => {
       }
     });
 
-    /*********** ENVÍO ***********/
     const formEnvio = document.getElementById('formEnvio');
     const btnGuardarEnvio = document.getElementById('btnGuardarEnvio');
     const btnLimpiarEnvio = document.getElementById('btnLimpiarEnvio');
@@ -559,9 +741,19 @@ clientes.forEach(c => {
 
     btnLimpiarEnvio.addEventListener('click', () => {
       formEnvio.reset();
+
+      hiddenCodigoRemitente.value = '';
+      hiddenCodigoDestinatario.value = '';
       hiddenCodigoCliente.value = '';
-      selectCliente.value = '';
-      renderClienteInfo('');
+
+      selectAfiliado.value = '';
+      selectRemitente.value = '';
+      selectDestinatario.value = '';
+
+      renderAfiliadoInfo('');
+      renderPersonaInfo(remitenteInfoDiv, '', 'remitente');
+      renderPersonaInfo(destinatarioInfoDiv, '', 'destinatario');
+
       clearAlert(alertEnvio);
     });
 
@@ -570,32 +762,56 @@ clientes.forEach(c => {
       clearAlert(alertEnvio);
 
       const formData = new FormData(formEnvio);
-      const codigoCliente = (formData.get('CodigoCliente') || '').toUpperCase().trim();
 
-      if (!codigoCliente) {
-        showAlert(alertEnvio, 'Debes seleccionar un cliente.', false);
+      const codigoAfiliado = (formData.get('AFILIADO_ID') || '').toUpperCase().trim();
+      const codigoRemitente = (formData.get('CodigoRemitente') || '').toUpperCase().trim();
+      const codigoDestinatario = (formData.get('CodigoDestinatario') || '').toUpperCase().trim();
+
+      if (!codigoRemitente) {
+        showAlert(alertEnvio, 'Debes seleccionar un remitente.', false);
+        return;
+      }
+
+      if (!codigoDestinatario) {
+        showAlert(alertEnvio, 'Debes seleccionar un destinatario.', false);
         return;
       }
 
       const payload = {
         action: 'createEnvio',
         secretKey: SECRET_KEY,
-        CodigoCliente: codigoCliente,
+
+        AFILIADO_ID: codigoAfiliado,
+        CodigoAfiliado: codigoAfiliado,
+
+        CodigoCliente: codigoDestinatario,
+        CodigoRemitente: codigoRemitente,
+        CodigoDestinatario: codigoDestinatario,
+
         RemitenteNombre: formData.get('RemitenteNombre') || '',
+        RemitenteCedula: formData.get('RemitenteCedula') || '',
         RemitenteTelefono: formData.get('RemitenteTelefono') || '',
+        RemitenteEmail: formData.get('RemitenteEmail') || '',
+        RemitenteCiudad: formData.get('RemitenteCiudad') || '',
+        RemitenteDireccion: formData.get('RemitenteDireccion') || '',
+
         TiendaOrigen: formData.get('TiendaOrigen') || '',
+
         Descripcion: formData.get('Descripcion') || '',
         PesoLb: formData.get('PesoLb') || '',
         ValorDeclarado: formData.get('ValorDeclarado') || '',
         Tipo: formData.get('Tipo') || '',
         EstadoInicial: formData.get('EstadoInicial') || '',
         TrackingInterno: formData.get('TrackingInterno') || '',
+
         DestNombre: formData.get('DestNombre') || '',
         DestCedula: formData.get('DestCedula') || '',
         DestTelefono: formData.get('DestTelefono') || '',
+        DestEmail: formData.get('DestEmail') || '',
         CiudadDestino: formData.get('CiudadDestino') || '',
         DestDireccion: formData.get('DestDireccion') || '',
         DestReferencia: formData.get('DestReferencia') || '',
+
         Observacion: formData.get('Observacion') || '',
         Usuario: 'Leonardo',
         CodigoGuia: formData.get('CodigoGuiaSelect') || ''
@@ -605,11 +821,7 @@ clientes.forEach(c => {
       btnGuardarEnvio.textContent = 'Guardando...';
 
       try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
+        const data = await postAPI(payload);
 
         if (!data.ok) {
           showAlert(alertEnvio, 'Error al guardar envío: ' + (data.error || 'desconocido'), false);
@@ -623,21 +835,26 @@ clientes.forEach(c => {
             true
           );
 
-          // Generar PDF etiqueta
           await generarGuiaPDF(codigoEnvio, {
             ...payload,
             CodigoGuia: codigoGuia
           });
 
-          // recargar guías en el select de consolidado
           loadGuias();
 
-          // mantener cliente seleccionado
-          const selectedCode = codigoCliente;
+          const selectedAfiliado = codigoAfiliado;
+          const selectedRemitente = codigoRemitente;
+          const selectedDestinatario = codigoDestinatario;
+
           formEnvio.reset();
-          selectCliente.value = selectedCode;
-          hiddenCodigoCliente.value = selectedCode;
-          renderClienteInfo(selectedCode);
+
+          selectAfiliado.value = selectedAfiliado;
+          selectRemitente.value = selectedRemitente;
+          selectDestinatario.value = selectedDestinatario;
+
+          renderAfiliadoInfo(selectedAfiliado);
+          autocompletarRemitente(selectedRemitente);
+          autocompletarDestinatario(selectedDestinatario);
         }
       } catch (err) {
         console.error(err);
@@ -648,7 +865,6 @@ clientes.forEach(c => {
       }
     });
 
-    /*********** PDF DE GUÍA (ETIQUETA) ***********/
     async function generarGuiaPDF(codigoEnvio, data) {
       try {
         const { jsPDF } = window.jspdf;
@@ -707,12 +923,12 @@ clientes.forEach(c => {
 
         doc.setFont('Helvetica', 'Bold');
         doc.setFontSize(11);
-        doc.text(destNombre.toUpperCase(), 18, 86);
+        doc.text(String(destNombre).toUpperCase(), 18, 86);
 
         doc.setFont('Helvetica', 'Normal');
         doc.setFontSize(9);
-        doc.text(destDireccion.toUpperCase(), 18, 100);
-        doc.text(ciudadDestino.toUpperCase(), 18, 112);
+        doc.text(String(destDireccion).toUpperCase(), 18, 100);
+        doc.text(String(ciudadDestino).toUpperCase(), 18, 112);
         doc.text(`TEL: ${destTelefono}`, 18, 124);
         doc.text(`ID: ${destCedula}`, 18, 136);
 
@@ -724,7 +940,7 @@ clientes.forEach(c => {
         doc.text(codigoGuia.replace('-', ' '), 144, 188, { align: 'center' });
 
         doc.setFontSize(9);
-        let etiquetaTipo = tipo.toUpperCase();
+        let etiquetaTipo = String(tipo).toUpperCase();
         if (esConsolidado) {
           etiquetaTipo += (etiquetaTipo ? ' • ' : '') + 'CONSOLIDADO';
         } else {
@@ -741,7 +957,8 @@ clientes.forEach(c => {
 
         const qrContainer = document.getElementById('qrcode');
         qrContainer.innerHTML = '';
-        const qr = new QRCode(qrContainer, {
+
+        new QRCode(qrContainer, {
           text: trackingUrl,
           width: 120,
           height: 120,
@@ -784,9 +1001,9 @@ clientes.forEach(c => {
       }
     }
 
-    // Carga inicial
     document.addEventListener('DOMContentLoaded', () => {
       loadClientes();
+      loadAfiliados();
       loadGuias();
     });
   </script>
